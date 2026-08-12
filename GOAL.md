@@ -1,5 +1,7 @@
 # Goal 功能拆分
 
+> **Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.**
+
 本文把 agent-core 中 goal mode 的能力拆成三部分：
 
 1. 核心工作流：没有它就不能运行 goal。

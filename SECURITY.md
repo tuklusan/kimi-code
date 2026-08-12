@@ -1,5 +1,9 @@
 # Security Policy
 
+> **Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.**
+>
+> Security reports for the upstream project should go to [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code/security). Issues specific to this fork's release artifacts (tag prefix `kimi-code-sanyalnet-cli-`) can be reported via [tuklusan/kimi-code issues](https://github.com/tuklusan/kimi-code/issues).
+
 ## Supported Versions
 
 Currently, Kimi Code only provides security support for the latest released version.

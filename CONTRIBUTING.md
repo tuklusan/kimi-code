@@ -1,5 +1,9 @@
 # Contributing to kimi-code
 
+> **Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.**
+>
+> This file is retained from upstream for reference. PRs against this fork are welcome, but if you want your change to reach upstream users, open it against [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) directly.
+
 Thanks for taking the time to contribute! This project moves quickly, and thoughtful contributions from the community are what keep it sharp. The guide below walks you through how we work so your PR has the best chance of landing smoothly.
 
 ## Before You Start
