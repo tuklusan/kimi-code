@@ -46,6 +46,7 @@ registerProtocolBase({
         maxTokens: config.providerOptions?.defaultMaxTokens,
         reasoningKey: config.providerOptions?.reasoningKey,
         offEffort: config.providerOptions?.offEffort,
+        omitPromptCacheKey: config.providerOptions?.sendPromptCacheKey === false,
         hooks: composeOpenAIChatHooks(traits),
       }),
     });

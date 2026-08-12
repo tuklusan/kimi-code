@@ -1,5 +1,12 @@
 # Kimi Code CLI
 
+> **Downstream fork notice — `tuklusan/kimi-code`**
+>
+> This is a personal fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks that are **not** intended to be upstreamed. Prebuilt native binaries for this fork are attached to releases tagged **`kimi-code-sanyalnet-cli-vX.Y.Z`** (title: `kimi-code-sanyalnet-cli rev X.Y.Z`) — see the [Releases page](https://github.com/tuklusan/kimi-code/releases) for the latest download. Upstream branding, package names, and the `kimi` binary name are kept as-is; only the release identifier differs.
+>
+> Local changes on top of upstream:
+> - Per-provider `send_prompt_cache_key` opt-out for strict OpenAI-compatible gateways (NVIDIA NIM, some vLLM deployments) that reject unknown request params with HTTP 400. Auto-set on `provider catalog add` for known strict endpoints; overridable via `kimi provider set <id> --send-prompt-cache-key <true|false>` or by hand in `config.toml`.
+
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) <br>
 [Documentation](https://moonshotai.github.io/kimi-code/en/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [中文](README.zh-CN.md)
 

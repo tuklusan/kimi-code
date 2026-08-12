@@ -386,6 +386,10 @@ export interface OpenAIResponsesOptions {
   toolMessageConversion?: ToolMessageConversion | undefined;
   clientFactory?: (auth: ProviderRequestAuth) => OpenAI;
   convertError?: (error: unknown) => ChatProviderError | undefined;
+  // When true, suppress the default `prompt_cache_key` injection. Sourced
+  // from the provider config knob `send_prompt_cache_key = false` (strict
+  // gateways like NVIDIA NIM reject unknown params with HTTP 400).
+  omitPromptCacheKey?: boolean | undefined;
 }
 
 export interface OpenAIResponsesGenerationKwargs {
@@ -1046,6 +1050,7 @@ export class OpenAIResponsesChatProvider implements ChatProvider {
   private readonly _httpClient: unknown;
   private readonly _clientFactory: ((auth: ProviderRequestAuth) => OpenAI) | undefined;
   private readonly _convertErrorHook: ((error: unknown) => ChatProviderError | undefined) | undefined;
+  private readonly _omitPromptCacheKey: boolean;
 
   constructor(options: OpenAIResponsesOptions) {
     const apiKey = options.apiKey ?? process.env['OPENAI_API_KEY'];
@@ -1061,6 +1066,7 @@ export class OpenAIResponsesChatProvider implements ChatProvider {
     this._httpClient = options.httpClient;
     this._clientFactory = options.clientFactory;
     this._convertErrorHook = options.convertError;
+    this._omitPromptCacheKey = options.omitPromptCacheKey === true;
 
     if (options.maxOutputTokens !== undefined) {
       this._generationKwargs.max_output_tokens = options.maxOutputTokens;
@@ -1099,7 +1105,9 @@ export class OpenAIResponsesChatProvider implements ChatProvider {
 
     let kwargs: Record<string, unknown> = { ...this._generationKwargs };
 
-    if (options?.cacheKey !== undefined) {
+    if (options?.cacheKey !== undefined && !this._omitPromptCacheKey) {
+      // Suppressed when the provider config set `send_prompt_cache_key = false`
+      // (strict gateways like NVIDIA NIM reject unknown params with HTTP 400).
       kwargs = { ...kwargs, prompt_cache_key: options.cacheKey };
     }
     if (options?.sampling?.temperature !== undefined) {

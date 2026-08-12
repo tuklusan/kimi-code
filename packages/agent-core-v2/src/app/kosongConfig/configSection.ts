@@ -74,6 +74,11 @@ export const ProviderConfigSchema = z.object({
   oauth: OAuthRefSchema.optional(),
   env: StringRecordSchema.optional(),
   source: z.record(z.string(), z.unknown()).optional(),
+
+  // TOML: `send_prompt_cache_key = false` per provider. Opt-out for the
+  // OpenAI-native `prompt_cache_key` request field on strict gateways
+  // (NVIDIA NIM etc.). Default undefined / true preserves current behavior.
+  sendPromptCacheKey: z.boolean().optional(),
 });
 
 export const ProvidersSectionSchema = z.record(z.string(), ProviderConfigSchema);

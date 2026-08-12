@@ -33,6 +33,12 @@ export const ProviderConfigSchema = z.object({
   env: StringRecordSchema.optional(),
   customHeaders: StringRecordSchema.optional(),
   source: z.record(z.string(), z.unknown()).optional(),
+  // Per-provider opt-out for the OpenAI-native `prompt_cache_key` field.
+  // Strict OpenAI-compatible gateways (NVIDIA NIM, some vLLM deployments)
+  // reject unknown params with HTTP 400. Set `send_prompt_cache_key = false`
+  // in config.toml under the provider entry. Default undefined / true keeps
+  // the current always-send behavior.
+  sendPromptCacheKey: z.boolean().optional(),
 });
 
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;

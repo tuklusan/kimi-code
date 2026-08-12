@@ -26,6 +26,7 @@ import {
   createKimiHarness,
   createKimiHarnessV2,
   DEFAULT_CATALOG_URL,
+  isStrictOpenAICompat,
   resolveCatalogImport,
   type Catalog,
   type CatalogProviderEntry,
@@ -148,6 +149,69 @@ export async function handleProviderAdd(
   for (const id of addedProviderIds) {
     deps.stdout.write(`  - ${id}\n`);
   }
+}
+
+interface SetOptions {
+  readonly sendPromptCacheKey?: boolean;
+}
+
+/**
+ * Mutates specific fields on a configured provider without touching its
+ * models or api key. Currently exposes only `--send-prompt-cache-key
+ * <true|false>` — the escape hatch for strict OpenAI-compatible gateways
+ * (NVIDIA NIM etc.) that reject unknown params with HTTP 400. Extend this
+ * function as more per-provider knobs are added.
+ */
+export async function handleProviderSet(
+  deps: ProviderDeps,
+  providerId: string,
+  opts: SetOptions,
+): Promise<void> {
+  const harness = deps.getHarness();
+  await harness.ensureConfigFile();
+  const config = await harness.getConfig();
+  const provider = config.providers[providerId];
+  if (provider === undefined) {
+    deps.stderr.write(`Provider "${providerId}" not found.\n`);
+    deps.exit(1);
+  }
+
+  const nothingRequested = opts.sendPromptCacheKey === undefined;
+  if (nothingRequested) {
+    deps.stderr.write(
+      'No settings to change. Pass at least one flag (e.g. --send-prompt-cache-key false).\n',
+    );
+    deps.exit(1);
+  }
+
+  const patched: Record<string, unknown> = { ...(provider as unknown as Record<string, unknown>) };
+  if (opts.sendPromptCacheKey !== undefined) {
+    patched['sendPromptCacheKey'] = opts.sendPromptCacheKey;
+  }
+  const nextProviders: Record<string, unknown> = { ...config.providers };
+  nextProviders[providerId] = patched;
+
+  await harness.setConfig({
+    providers: nextProviders as unknown as typeof config.providers,
+  });
+
+  if (opts.sendPromptCacheKey !== undefined) {
+    deps.stdout.write(
+      `Set send_prompt_cache_key = ${String(opts.sendPromptCacheKey)} on provider "${providerId}".\n`,
+    );
+  }
+}
+
+/** Parses a string CLI flag as a boolean. */
+function parseBooleanFlag(name: string, raw: string): boolean {
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  throw new Error(`--${name} expects true|false (got "${raw}").`);
 }
 
 export async function handleProviderRemove(
@@ -430,6 +494,11 @@ export async function handleCatalogAdd(
       `Note: the catalog does not declare a protocol for "${providerId}"; guessed "openai". Edit "type" in config.toml if requests fail.\n`,
     );
   }
+  if (isStrictOpenAICompat(providerId, baseUrl)) {
+    deps.stdout.write(
+      `Note: "${providerId}" is a strict OpenAI-compatible gateway; set send_prompt_cache_key = false automatically to avoid HTTP 400 on unknown params. Override in config.toml if your deployment accepts the field.\n`,
+    );
+  }
   if (opts.defaultModel !== undefined) {
     deps.stdout.write(`Default model set to ${providerId}/${opts.defaultModel}.\n`);
   }
@@ -489,6 +558,29 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
     .action(async (providerId: string) => {
       const resolved = resolveDeps(deps);
       await runAction(resolved, () => handleProviderRemove(resolved, providerId));
+    });
+
+  provider
+    .command('set <providerId>')
+    .description('Mutate settings on a configured provider (currently: send_prompt_cache_key).')
+    .option(
+      '--send-prompt-cache-key <true|false>',
+      'Opt-out for strict OpenAI-compatible gateways (NVIDIA NIM etc.) that reject unknown params.',
+    )
+    .action(async (providerId: string, options: { sendPromptCacheKey?: string }) => {
+      const resolved = resolveDeps(deps);
+      await runAction(resolved, () =>
+        handleProviderSet(resolved, providerId, {
+          ...(options.sendPromptCacheKey === undefined
+            ? {}
+            : {
+                sendPromptCacheKey: parseBooleanFlag(
+                  'send-prompt-cache-key',
+                  options.sendPromptCacheKey,
+                ),
+              }),
+        }),
+      );
     });
 
   provider

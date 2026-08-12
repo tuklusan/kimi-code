@@ -91,6 +91,29 @@ export function catalogModelToAlias(providerId: string, model: CatalogModel): Mo
   };
 }
 
+/**
+ * Providers known to strict-validate OpenAI-compatible request bodies and
+ * reject unknown parameters (`prompt_cache_key`, `metadata`, etc.) with HTTP
+ * 400. Match is case-insensitive on either the catalog provider id or the
+ * base URL hostname. Extend as new gateways are confirmed.
+ */
+const STRICT_OPENAI_COMPAT_PROVIDER_IDS = new Set(['nvidia', 'nim']);
+const STRICT_OPENAI_COMPAT_HOSTS = new Set([
+  'integrate.api.nvidia.com',
+  'api.nvcf.nvidia.com',
+]);
+
+export function isStrictOpenAICompat(providerId: string, baseUrl: string | undefined): boolean {
+  if (STRICT_OPENAI_COMPAT_PROVIDER_IDS.has(providerId.toLowerCase())) return true;
+  if (baseUrl === undefined) return false;
+  try {
+    const host = new URL(baseUrl).hostname.toLowerCase();
+    return STRICT_OPENAI_COMPAT_HOSTS.has(host);
+  } catch {
+    return false;
+  }
+}
+
 export interface ApplyCatalogProviderOptions {
   readonly providerId: string;
   readonly wire: ProviderType;
@@ -131,10 +154,17 @@ export function applyCatalogProvider(
   config: KimiConfig,
   options: ApplyCatalogProviderOptions,
 ): { defaultModel: string } {
+  const strictBody = isStrictOpenAICompat(options.providerId, options.baseUrl);
   config.providers[options.providerId] = {
     type: options.wire,
     baseUrl: options.baseUrl,
     apiKey: options.apiKey,
+    // Strict OpenAI-compatible gateways (NVIDIA NIM etc.) reject unknown
+    // params with HTTP 400. Auto-opt them out of the OpenAI-native
+    // `prompt_cache_key` field so out-of-the-box import Just Works. Users
+    // can still flip it back with `send_prompt_cache_key = true` in
+    // config.toml if their deployment happens to accept the field.
+    ...(strictBody ? { sendPromptCacheKey: false } : {}),
   };
 
   const models = config.models ?? {};

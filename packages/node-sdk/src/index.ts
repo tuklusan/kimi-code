@@ -31,6 +31,7 @@ export {
   DEFAULT_CATALOG_URL,
   fetchCatalog,
   inferWireType,
+  isStrictOpenAICompat,
   loadBuiltInCatalog,
   resolveCatalogImport,
 } from '#/catalog';

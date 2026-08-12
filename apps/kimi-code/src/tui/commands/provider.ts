@@ -9,6 +9,7 @@ import {
   catalogProviderModels,
   CatalogFetchError,
   DEFAULT_CATALOG_URL,
+  isStrictOpenAICompat,
   resolveCatalogImport,
   type Catalog,
   type ThinkingEffort,
@@ -257,6 +258,11 @@ async function handleCatalogProviderAdd(host: SlashCommandHost): Promise<void> {
   if (resolution.guessed) {
     host.showStatus(
       `Protocol guessed as "openai" for ${providerId} — edit "type" in config.toml if requests fail.`,
+    );
+  }
+  if (isStrictOpenAICompat(providerId, baseUrl)) {
+    host.showStatus(
+      `${providerId} is a strict OpenAI-compatible gateway; auto-set send_prompt_cache_key = false. Toggle in config.toml if your deployment accepts the field.`,
     );
   }
 

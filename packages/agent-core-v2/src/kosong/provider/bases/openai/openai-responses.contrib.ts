@@ -34,6 +34,7 @@ registerProtocolBase({
         defaultHeaders: traitDefaultHeaders(traits),
         maxOutputTokens: config.providerOptions?.defaultMaxTokens,
         offEffort: config.providerOptions?.offEffort,
+        omitPromptCacheKey: config.providerOptions?.sendPromptCacheKey === false,
         convertError: traitConvertError(traits),
       }),
     });

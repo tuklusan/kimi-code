@@ -2,6 +2,14 @@
 
 Reply in the same language as the user.
 
+## Hard Naming Prohibition (effective 2026-08-12)
+
+- **The five-letter proper noun that names Anthropic's AI assistant product — the one starting with "Cl-" and ending with "-de" — and every casing, spacing, hyphenation, or compound variation of it (upper, lower, mixed; with hyphens, underscores, dots; as a substring of a longer identifier) MUST NOT appear anywhere new in this project.** This covers: source code, comments, string literals, variable and function names, file and directory names, test names and fixtures, docs, changelogs, commit messages, branch names, PR titles and bodies, tags, and any generated artifact.
+- **Existing occurrences from before this rule are grandfathered.** As of the rule's effective date, 87 files contain the banned word — most notably the Anthropic wire integration (`packages/kosong/src/providers/anthropic.ts` and related), the model-id strings Anthropic contractually requires on the wire (which begin with the banned prefix), and the test fixtures that reference them. **Leave those in place. Do not perform a bulk rewrite.** When editing a grandfathered file for an unrelated reason, do not introduce new occurrences.
+- **Wire-level exception, narrow:** literal model-id strings that Anthropic requires on the HTTP wire (sent to `api.anthropic.com`) are exempt because they are third-party API contract, not our naming. This exception applies only to the exact literal at the point of transmission — not to variable names holding it, not to comments describing it, not to test descriptions about it.
+- **When the concept must be referred to in new prose or identifiers, use:** "Anthropic's assistant", "the Anthropic model", "the anthropic wire", or a similarly neutral phrase.
+- **Enforcement in git/GitHub commands (no exception, case-insensitive):** the banned word must not appear in ANY argument to `git` or `gh` — commit messages, branch names, tag names, remote names, PR titles, PR bodies, issue titles/bodies, review comments, release notes, or any other flag value. Verify every command string before executing. This applies even when the word is grandfathered inside a file being committed (the file may contain it; the command referring to the file must not).
+
 This is a TypeScript monorepo built for agent-assisted development. Keep the root `AGENTS.md` limited to hot-path rules: the project map, hard constraints, and workflow requirements — things every task needs to know.
 
 ## Working Principles

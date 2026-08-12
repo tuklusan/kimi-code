@@ -708,6 +708,20 @@ describe('per-turn intent wire encoding (behavior probes)', () => {
     expect(body['prompt_cache_key']).toBe('session-probe');
   });
 
+  it('omits prompt_cache_key on OpenAI when providerOptions.sendPromptCacheKey is false (strict gateways like NVIDIA NIM)', async () => {
+    const provider = registry.createChatProvider({
+      protocol: 'openai',
+      modelName: 'meta/llama-3.1-70b-instruct',
+      apiKey: 'nvapi-probe',
+      baseUrl: 'https://integrate.api.nvidia.com/v1',
+      providerOptions: { sendPromptCacheKey: false },
+    });
+
+    const body = await captureOpenAIBody(provider, { cacheKey: 'session-probe' });
+
+    expect(body).not.toHaveProperty('prompt_cache_key');
+  });
+
   it('encodes cacheKey on Anthropic as metadata.user_id', async () => {
     const provider = registry.createChatProvider({
       protocol: 'anthropic',

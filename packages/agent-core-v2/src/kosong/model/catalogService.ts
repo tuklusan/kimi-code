@@ -625,6 +625,9 @@ function buildProtocolProviderOptions(
       const reasoningKey = nonEmpty(model.reasoningKey);
       if (reasoningKey !== undefined) options.reasoningKey = reasoningKey;
       if (model.offEffort !== undefined) options.offEffort = model.offEffort;
+      if (provider?.sendPromptCacheKey !== undefined) {
+        options.sendPromptCacheKey = provider.sendPromptCacheKey;
+      }
       break;
     }
     case 'google-genai': {
@@ -639,6 +642,9 @@ function buildProtocolProviderOptions(
     }
     case 'openai_responses':
       if (model.offEffort !== undefined) options.offEffort = model.offEffort;
+      if (provider?.sendPromptCacheKey !== undefined) {
+        options.sendPromptCacheKey = provider.sendPromptCacheKey;
+      }
       break;
     default: {
       const exhaustive: never = protocol;

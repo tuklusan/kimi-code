@@ -1,0 +1,129 @@
+name: Sanyalnet Release
+
+# Downstream-fork release: builds unsigned native binaries via the existing
+# `_native-build.yml` reusable workflow and publishes them as a GitHub Release
+# tagged `kimi-code-sanyalnet-cli-vX.Y.Z`. Runs only on `tuklusan/kimi-code`
+# (or any fork the user runs it from) — never on upstream MoonshotAI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (without leading v; e.g. 0.0.1)'
+        required: true
+        type: string
+        default: '0.0.1'
+      prerelease:
+        description: 'Mark this release as a pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sanyalnet-release-${{ github.event.inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build native binaries
+    # `sign-macos: false` skips Apple keychain / notarization steps — the
+    # personal fork has no Apple secrets. macOS binaries ship unsigned; users
+    # will need to `xattr -d com.apple.quarantine` on first run.
+    uses: ./.github/workflows/_native-build.yml
+    with:
+      upload-artifact-prefix: kimi-code-sanyalnet-cli
+      retention-days: 30
+      sign-macos: false
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: dist-artifacts
+          pattern: kimi-code-sanyalnet-cli-*
+          merge-multiple: true
+
+      - name: Show downloaded artifacts
+        run: |
+          echo "Contents of dist-artifacts:"
+          find dist-artifacts -type f | sort
+
+      - name: Rename artifacts to fork-branded names
+        run: |
+          set -euo pipefail
+          cd dist-artifacts
+          # Reusable workflow uploads zip files named
+          # `kimi-code-<target>.zip` / `.sha256`. Rename to fork branding.
+          for f in kimi-code-*.zip kimi-code-*.zip.sha256; do
+            [ -e "$f" ] || continue
+            newname="${f/kimi-code-/kimi-code-sanyalnet-cli-}"
+            if [ "$f" != "$newname" ]; then
+              mv "$f" "$newname"
+              echo "renamed: $f -> $newname"
+            fi
+          done
+          ls -la
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          TAG="kimi-code-sanyalnet-cli-v${VERSION}"
+          TITLE="kimi-code-sanyalnet-cli rev ${VERSION}"
+          NOTES_FILE="$(mktemp)"
+          cat > "$NOTES_FILE" <<EOF
+          # kimi-code-sanyalnet-cli rev ${VERSION}
+
+          Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.
+
+          ## Downloads
+
+          Unsigned native binaries built via Node.js SEA on GitHub Actions runners. Six targets:
+
+          | Platform | Artifact |
+          |---|---|
+          | Linux x64 | \`kimi-code-sanyalnet-cli-linux-x64.zip\` |
+          | Linux arm64 | \`kimi-code-sanyalnet-cli-linux-arm64.zip\` |
+          | macOS x64 (Intel) | \`kimi-code-sanyalnet-cli-darwin-x64.zip\` |
+          | macOS arm64 (Apple Silicon) | \`kimi-code-sanyalnet-cli-darwin-arm64.zip\` |
+          | Windows x64 | \`kimi-code-sanyalnet-cli-win32-x64.zip\` |
+          | Windows arm64 | \`kimi-code-sanyalnet-cli-win32-arm64.zip\` |
+
+          Each zip contains the \`kimi\` binary. macOS binaries are **unsigned** — after unzipping run \`xattr -d com.apple.quarantine kimi\` before first launch.
+
+          Verify with the accompanying \`.sha256\` file: \`sha256sum -c kimi-code-sanyalnet-cli-<target>.zip.sha256\`.
+
+          ## Changes vs upstream
+
+          - Per-provider \`send_prompt_cache_key\` opt-out for strict OpenAI-compatible gateways (NVIDIA NIM etc.). Auto-set on \`kimi provider catalog add\` for known strict endpoints; overridable via \`kimi provider set <id> --send-prompt-cache-key false\`.
+
+          Built from commit ${GITHUB_SHA}.
+          EOF
+
+          PRERELEASE_FLAG=""
+          if [ "$PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$TAG" \
+            --title "$TITLE" \
+            --notes-file "$NOTES_FILE" \
+            --target "${GITHUB_SHA}" \
+            $PRERELEASE_FLAG \
+            dist-artifacts/*.zip \
+            dist-artifacts/*.zip.sha256

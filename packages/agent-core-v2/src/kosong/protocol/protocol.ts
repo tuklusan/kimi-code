@@ -49,6 +49,11 @@ export interface ProtocolProviderOptions {
   readonly vertexai?: boolean;
   readonly project?: string;
   readonly location?: string;
+  // When `false`, the openai / openai_responses bases MUST NOT inject the
+  // `prompt_cache_key` request field. Undefined / true keeps the legacy
+  // always-send behavior. Sourced from the per-provider
+  // `send_prompt_cache_key` config knob.
+  readonly sendPromptCacheKey?: boolean;
 }
 
 export interface ProtocolAdapterConfig {
