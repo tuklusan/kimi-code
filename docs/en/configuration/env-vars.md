@@ -199,6 +199,12 @@ The proxy is applied only when one of these variables is set; otherwise connecti
 
 Stdio MCP servers that run as Node child processes honor `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` automatically when the child's Node version supports `NODE_USE_ENV_PROXY` (Node ≥ 22.21 or ≥ 24.5); SOCKS proxying applies to Kimi Code's own traffic only.
 
+## Model-driven outbound rate limit (downstream fork only)
+
+> Applies to the `tuklusan/kimi-code` downstream fork; not present in upstream MoonshotAI/kimi-code.
+
+- `KIMI_OUTBOUND_MIN_INTERVAL_MS` — minimum spacing, in milliseconds, between successive model-driven outbound network calls made by the `fetch_url` and `web_search` tools. The gate is shared across both tools, so a runaway loop that alternates between them still respects the interval. Default `1000` (one second). Set to `0` to disable. Model API calls (LLM inference) and non-tool traffic are **not** throttled by this variable.
+
 ## Next steps
 
 - [Config overrides](./overrides.md) — how environment variables, CLI options, and the config file interact by priority

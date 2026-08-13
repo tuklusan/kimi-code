@@ -28,6 +28,7 @@ import {
 } from '@moonshot-ai/kimi-code-oauth';
 import { LifecycleScope } from '#/app/scopes';
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { sharedOutboundGate } from '#/_base/utils/rate-limit';
 import { IOAuthService } from '#/app/auth/auth';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
@@ -52,7 +53,8 @@ export class WebSearchProviderService implements IWebSearchProviderService {
   ) {}
 
   getWebSearchProvider(): WebSearchProvider | undefined {
-    return this.fromServicesConfig() ?? this.fromManagedOAuth();
+    const inner = this.fromServicesConfig() ?? this.fromManagedOAuth();
+    return inner === undefined ? undefined : throttleWebSearchProvider(inner);
   }
 
   hasWebSearchProvider(): boolean {
@@ -113,6 +115,17 @@ export class WebSearchProviderService implements IWebSearchProviderService {
 function nonEmptyString(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
+}
+
+function throttleWebSearchProvider(inner: WebSearchProvider): WebSearchProvider {
+  return {
+    async search(query, options) {
+      // Same shared gate as URL fetches — one interval covers both surfaces
+      // so a runaway loop across the two tools still spaces out to disk.
+      await sharedOutboundGate.wait(options?.signal);
+      return inner.search(query, options);
+    },
+  };
 }
 
 registerScopedService(

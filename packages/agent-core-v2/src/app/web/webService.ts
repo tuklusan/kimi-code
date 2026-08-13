@@ -27,6 +27,7 @@ import {
 } from '@moonshot-ai/kimi-code-oauth';
 import { LifecycleScope } from '#/app/scopes';
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { sharedOutboundGate } from '#/_base/utils/rate-limit';
 import { IOAuthService } from '#/app/auth/auth';
 import { SERVICES_SECTION, type ServicesConfig } from '#/app/auth/configSection';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
@@ -55,7 +56,10 @@ export class WebFetchService implements IWebFetchService {
   }
 
   getUrlFetcher(): UrlFetcher {
-    return this.fromServicesConfig() ?? this.fromManagedOAuth() ?? this.localFetcher;
+    const inner = this.fromServicesConfig() ?? this.fromManagedOAuth() ?? this.localFetcher;
+    // Throttle model-driven outbound calls. Shared with web-search so a
+    // runaway loop across both tools still respects the minimum interval.
+    return throttleUrlFetcher(inner);
   }
 
   private fromServicesConfig(): UrlFetcher | undefined {
@@ -103,6 +107,15 @@ export class WebFetchService implements IWebFetchService {
 function nonEmptyString(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
+}
+
+function throttleUrlFetcher(inner: UrlFetcher): UrlFetcher {
+  return {
+    async fetch(url, options) {
+      await sharedOutboundGate.wait(options?.signal);
+      return inner.fetch(url, options);
+    },
+  };
 }
 
 registerScopedService(
