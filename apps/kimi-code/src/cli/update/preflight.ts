@@ -424,20 +424,28 @@ async function showPendingBackgroundInstallNotice(
 
 /**
  * Downstream-fork policy (`tuklusan/kimi-code` / `kimi-code-sanyalnet-cli`):
- * auto-update is **fully disabled**, unconditionally. This fork ships
- * standalone native binaries attached to its own release tags
- * (`kimi-code-sanyalnet-cli-v*`) and must never fetch, prompt for, or
- * install upstream MoonshotAI/kimi-code releases — those come from a
- * different distribution channel and would silently replace the fork's
- * binary with an upstream one. Callers get `runUpdatePreflight` → `continue`
- * immediately: no check, no background install, no prompt.
+ * auto-update is **disabled by default**. This fork ships its own native
+ * binaries under the `kimi-code-sanyalnet-cli-v*` release tags; the upstream
+ * update channel is a separate distribution and, left on by default, would
+ * silently replace the fork's binary with an upstream one on every launch.
  *
- * The legacy env-var switches (`KIMI_CODE_NO_AUTO_UPDATE` and
- * `KIMI_CLI_NO_AUTO_UPDATE`) are honored only in the sense that the fork's
- * behavior is equivalent to them being permanently set. `env` is unused.
+ * Users can opt back in with `KIMI_CODE_AUTO_UPDATE=1` (or the usual truthy
+ * spellings: `1`, `true`, `yes`, `on`) — provided as an escape hatch for
+ * anyone who deliberately wants to hop onto the upstream release train.
+ *
+ * The upstream disable switches (`KIMI_CODE_NO_AUTO_UPDATE` /
+ * `KIMI_CLI_NO_AUTO_UPDATE`) still short-circuit to disabled, so scripts
+ * and CI that pin them keep working. On a conflict — both opt-in and
+ * opt-out set — the opt-out wins (safest).
  */
-function isAutoUpdateDisabledByEnv(_env: NodeJS.ProcessEnv = process.env): boolean {
-  return true;
+function isAutoUpdateDisabledByEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  const truthy = (value?: string): boolean =>
+    ['1', 'true', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
+  if (truthy(env['KIMI_CODE_NO_AUTO_UPDATE']) || truthy(env['KIMI_CLI_NO_AUTO_UPDATE'])) {
+    return true;
+  }
+  // Fork-only inversion: no explicit opt-in → disabled.
+  return !truthy(env['KIMI_CODE_AUTO_UPDATE']);
 }
 
 async function shouldAutoInstallUpdates(): Promise<boolean> {

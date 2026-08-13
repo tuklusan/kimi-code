@@ -7,7 +7,7 @@
 > Local changes on top of upstream:
 > - Per-provider `send_prompt_cache_key` opt-out for strict OpenAI-compatible gateways (NVIDIA NIM, some vLLM deployments) that reject unknown request params with HTTP 400. Auto-set on `provider catalog add` for known strict endpoints; overridable via `kimi provider set <id> --send-prompt-cache-key <true|false>` or by hand in `config.toml`.
 > - Minimum 1-second gap between model-driven outbound network calls (`fetch_url`, `web_search`). Shared across both tools so a runaway loop cannot hammer external hosts. Tune with `KIMI_OUTBOUND_MIN_INTERVAL_MS` (env var, milliseconds; default `1000`; set to `0` to disable).
-> - **Auto-update is disabled unconditionally.** This fork ships its own native binaries under the `kimi-code-sanyalnet-cli-v*` release tags; the upstream update channel is a separate distribution and would silently replace the fork's binary. Use `kimi upgrade` (manual, user-initiated) or download a newer release zip if you want to update.
+> - **Auto-update is disabled by default.** This fork ships its own native binaries under the `kimi-code-sanyalnet-cli-v*` release tags; the upstream update channel is a separate distribution and, if left on, would silently replace the fork's binary. Opt back in with `KIMI_CODE_AUTO_UPDATE=1` if you deliberately want to hop onto the upstream release train. Manual `kimi upgrade` still works.
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) <br>
 [Documentation](https://moonshotai.github.io/kimi-code/en/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [中文](README.zh-CN.md)

@@ -238,6 +238,11 @@ describe('runUpdatePreflight', () => {
     // regardless of the host environment (the flag bypasses batch holds).
     // Tests that exercise the bypass opt back in with `vi.stubEnv(..., '1')`.
     vi.stubEnv('KIMI_CODE_EXPERIMENTAL_FLAG', '');
+    // Downstream-fork inversion: auto-update is disabled unless the user
+    // opts in. Every test in this file exercises the update flow, so opt in
+    // here in `beforeEach`; the two dedicated NO_AUTO_UPDATE tests further
+    // stub the opt-out on top and take precedence.
+    vi.stubEnv('KIMI_CODE_AUTO_UPDATE', '1');
     mocks.readUpdateInstallState.mockResolvedValue(emptyUpdateInstallState());
     mocks.writeUpdateInstallState.mockResolvedValue(undefined);
     mocks.loadTuiConfig.mockResolvedValue(tuiConfig());
