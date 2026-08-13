@@ -423,15 +423,21 @@ async function showPendingBackgroundInstallNotice(
 }
 
 /**
- * `KIMI_CODE_NO_AUTO_UPDATE` (or the legacy `KIMI_CLI_NO_AUTO_UPDATE` alias)
- * fully disables the update preflight — no check, no background install, no
- * prompt. Migrated from kimi-cli, where the variable gated all auto-update
- * behavior. Accepts the usual truthy values (`1`/`true`/`yes`/`on`).
+ * Downstream-fork policy (`tuklusan/kimi-code` / `kimi-code-sanyalnet-cli`):
+ * auto-update is **fully disabled**, unconditionally. This fork ships
+ * standalone native binaries attached to its own release tags
+ * (`kimi-code-sanyalnet-cli-v*`) and must never fetch, prompt for, or
+ * install upstream MoonshotAI/kimi-code releases — those come from a
+ * different distribution channel and would silently replace the fork's
+ * binary with an upstream one. Callers get `runUpdatePreflight` → `continue`
+ * immediately: no check, no background install, no prompt.
+ *
+ * The legacy env-var switches (`KIMI_CODE_NO_AUTO_UPDATE` and
+ * `KIMI_CLI_NO_AUTO_UPDATE`) are honored only in the sense that the fork's
+ * behavior is equivalent to them being permanently set. `env` is unused.
  */
-function isAutoUpdateDisabledByEnv(env: NodeJS.ProcessEnv = process.env): boolean {
-  const truthy = (value?: string): boolean =>
-    ['1', 'true', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
-  return truthy(env['KIMI_CODE_NO_AUTO_UPDATE']) || truthy(env['KIMI_CLI_NO_AUTO_UPDATE']);
+function isAutoUpdateDisabledByEnv(_env: NodeJS.ProcessEnv = process.env): boolean {
+  return true;
 }
 
 async function shouldAutoInstallUpdates(): Promise<boolean> {
