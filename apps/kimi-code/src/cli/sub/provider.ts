@@ -184,12 +184,14 @@ export async function handleProviderSet(
     deps.exit(1);
   }
 
-  const patched: Record<string, unknown> = { ...(provider as unknown as Record<string, unknown>) };
-  if (opts.sendPromptCacheKey !== undefined) {
-    patched['sendPromptCacheKey'] = opts.sendPromptCacheKey;
-  }
-  const nextProviders: Record<string, unknown> = { ...config.providers };
-  nextProviders[providerId] = patched;
+  const patched: Record<string, unknown> = {
+    ...(provider as unknown as Record<string, unknown>),
+    sendPromptCacheKey: opts.sendPromptCacheKey,
+  };
+  const nextProviders: Record<string, unknown> = {
+    ...config.providers,
+    [providerId]: patched,
+  };
 
   await harness.setConfig({
     providers: nextProviders as unknown as typeof config.providers,
@@ -571,14 +573,10 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
       const resolved = resolveDeps(deps);
       await runAction(resolved, () =>
         handleProviderSet(resolved, providerId, {
-          ...(options.sendPromptCacheKey === undefined
-            ? {}
-            : {
-                sendPromptCacheKey: parseBooleanFlag(
-                  'send-prompt-cache-key',
-                  options.sendPromptCacheKey,
-                ),
-              }),
+          sendPromptCacheKey:
+            options.sendPromptCacheKey === undefined
+              ? undefined
+              : parseBooleanFlag('send-prompt-cache-key', options.sendPromptCacheKey),
         }),
       );
     });

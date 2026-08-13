@@ -315,6 +315,7 @@ merge_all_available_skills = true
     # oauth_host: string
   # env: record<string, string>
   # source: record<string, any>
+  # send_prompt_cache_key: boolean
 
 # ##########################################################################
 # secondaryModel (config.toml: secondary_model)

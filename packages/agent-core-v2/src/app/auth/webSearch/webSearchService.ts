@@ -118,14 +118,24 @@ function nonEmptyString(value: string | undefined): string | undefined {
 }
 
 function throttleWebSearchProvider(inner: WebSearchProvider): WebSearchProvider {
-  return {
-    async search(query, options) {
-      // Same shared gate as URL fetches — one interval covers both surfaces
-      // so a runaway loop across the two tools still spaces out to disk.
-      await sharedOutboundGate.wait(options?.signal);
-      return inner.search(query, options);
+  // Same shared gate as URL fetches — one interval covers both surfaces so
+  // a runaway loop across the two tools still spaces out to disk. Proxy
+  // preserves the prototype chain so any `instanceof MoonshotWebSearchProvider`
+  // checks against the returned value still pass; only `search` is
+  // intercepted.
+  return new Proxy(inner, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (prop !== 'search' || typeof value !== 'function') return value;
+      return async (
+        query: string,
+        options?: { toolCallId?: string; signal?: AbortSignal },
+      ) => {
+        await sharedOutboundGate.wait(options?.signal);
+        return (value as WebSearchProvider['search']).call(target, query, options);
+      };
     },
-  };
+  });
 }
 
 registerScopedService(

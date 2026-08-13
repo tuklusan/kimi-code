@@ -154,17 +154,19 @@ export function applyCatalogProvider(
   config: KimiConfig,
   options: ApplyCatalogProviderOptions,
 ): { defaultModel: string } {
-  const strictBody = isStrictOpenAICompat(options.providerId, options.baseUrl);
+  // Strict OpenAI-compatible gateways (NVIDIA NIM etc.) reject unknown
+  // params with HTTP 400. Auto-opt them out of the OpenAI-native
+  // `prompt_cache_key` field so out-of-the-box import Just Works. Users
+  // can still flip it back with `send_prompt_cache_key = true` in
+  // config.toml if their deployment happens to accept the field.
+  const sendPromptCacheKey = isStrictOpenAICompat(options.providerId, options.baseUrl)
+    ? false
+    : undefined;
   config.providers[options.providerId] = {
     type: options.wire,
     baseUrl: options.baseUrl,
     apiKey: options.apiKey,
-    // Strict OpenAI-compatible gateways (NVIDIA NIM etc.) reject unknown
-    // params with HTTP 400. Auto-opt them out of the OpenAI-native
-    // `prompt_cache_key` field so out-of-the-box import Just Works. Users
-    // can still flip it back with `send_prompt_cache_key = true` in
-    // config.toml if their deployment happens to accept the field.
-    ...(strictBody ? { sendPromptCacheKey: false } : {}),
+    sendPromptCacheKey,
   };
 
   const models = config.models ?? {};

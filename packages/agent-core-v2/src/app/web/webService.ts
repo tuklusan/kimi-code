@@ -110,12 +110,22 @@ function nonEmptyString(value: string | undefined): string | undefined {
 }
 
 function throttleUrlFetcher(inner: UrlFetcher): UrlFetcher {
-  return {
-    async fetch(url, options) {
-      await sharedOutboundGate.wait(options?.signal);
-      return inner.fetch(url, options);
+  // Proxy preserves the prototype chain so `instanceof LocalFetchURLProvider`
+  // / `MoonshotFetchURLProvider` checks (used by callers to introspect which
+  // backend resolved) still succeed. Only `fetch` is intercepted.
+  return new Proxy(inner, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (prop !== 'fetch' || typeof value !== 'function') return value;
+      return async (
+        url: string,
+        options?: { toolCallId?: string; signal?: AbortSignal },
+      ) => {
+        await sharedOutboundGate.wait(options?.signal);
+        return (value as UrlFetcher['fetch']).call(target, url, options);
+      };
     },
-  };
+  });
 }
 
 registerScopedService(
