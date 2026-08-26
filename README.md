@@ -1,27 +1,67 @@
 # SANYALnet Labs Kimi Code CLI Software Development Company
 
 > **Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.**
->
-> A tuned build of the Kimi Code CLI that ships a preconfigured six-role AI "software development company" out of the box — inspired by [ChatDev](https://github.com/OpenBMB/ChatDev): a small hierarchy of specialised subagents (CEO, CPO, CTO, programmer, reviewer, tester) collaborate through a five-phase SDLC pipeline to turn a natural-language product requirement into working, reviewed, tested code.
->
-> **How the company works.** On any fresh session, kimi loads the primer at `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md` (via the fork's [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) autoload) and treats the six persona files under `~/.kimi-code/agents/` as bindable subagents. When you submit a product requirement, the CEO reads the primer and dispatches through five phases in order: **Phase 1 — Inception & Status Audit** (`ceo` + `cpo` synthesise a Product Requirement Document from your prompt), **Phase 2 — Architectural Blueprint** (`cto` picks the tech stack and issues an architectural sign-off), **Phase 3 — Implementation** (`programmer` writes the source, incrementally, against the blueprint), **Phase 4 — Static Review** (`reviewer` audits the diff and returns findings until zero critical defects remain), **Phase 5 — QA** (`tester` designs and runs unit / integration / edge-case tests, then issues a Certificate of Compliance). Each phase's output is the next phase's input; subagents run in isolated contexts and hand back structured results to the parent session, so the transcript stays legible. The full directive lives in [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md) and each persona is in [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/); install onto a fresh box with [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh).
->
-> This is a personal fork (`tuklusan/kimi-code`) with local tweaks that are **not** intended to be upstreamed. Prebuilt native binaries for this fork are attached to releases tagged **`kimi-code-sanyalnet-cli-vX.Y.Z`** (title: `kimi-code-sanyalnet-cli rev X.Y.Z`) — see the [Releases page](https://github.com/tuklusan/kimi-code/releases) for the latest download. Upstream branding, package names, and the `kimi` binary name are kept as-is; only the release identifier differs.
->
-> Local changes on top of upstream:
-> - Per-provider `send_prompt_cache_key` opt-out for strict OpenAI-compatible gateways (NVIDIA NIM, some vLLM deployments) that reject unknown request params with HTTP 400. Auto-set on `provider catalog add` for known strict endpoints; overridable via `kimi provider set <id> --send-prompt-cache-key <true|false>` or by hand in `config.toml`.
-> - Minimum 1-second gap between model-driven outbound network calls (`fetch_url`, `web_search`). Shared across both tools so a runaway loop cannot hammer external hosts. Tune with `KIMI_OUTBOUND_MIN_INTERVAL_MS` (env var, milliseconds; default `1000`; set to `0` to disable).
-> - **Auto-update is disabled by default.** This fork ships its own native binaries under the `kimi-code-sanyalnet-cli-v*` release tags; the upstream update channel is a separate distribution and, if left on, would silently replace the fork's binary. Opt back in with `KIMI_CODE_AUTO_UPDATE=1` if you deliberately want to hop onto the upstream release train. Manual `kimi upgrade` still works.
-> - **Initial-prompt autoload.** When `KIMI_INITIAL_PROMPT_FILE=/path/to/file` is set, the TUI editor is pre-populated with the file's contents on every fresh session (never on resume). Lets recurring multi-agent primers — e.g. the SANYALnet SDLC "software company" directive under `sanyalnet-lab/` — load one Enter-press away.
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) [![CI](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/ci.yml?branch=main&label=CI)](https://github.com/tuklusan/kimi-code/actions/workflows/ci.yml) [![Smoke](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/sanyalnet-smoke.yml?branch=main&label=Company%20smoke%20%C3%97%206%20platforms)](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml) [![Release](https://img.shields.io/github/v/release/tuklusan/kimi-code?label=fork%20release&color=blue)](https://github.com/tuklusan/kimi-code/releases) <br>
-[Documentation](https://moonshotai.github.io/kimi-code/en/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [中文](README.zh-CN.md)
+A tuned build of the Kimi Code CLI that ships a preconfigured six-role AI **software development company** out of the box — inspired by [ChatDev](https://github.com/OpenBMB/ChatDev). A small hierarchy of specialised subagents (CEO, CPO, CTO, programmer, reviewer, tester) collaborates through a five-phase SDLC pipeline to turn a natural-language product requirement into working, reviewed, tested code.
 
-![Demo of using Kimi Code](./docs/media/intro.gif)
+**➡ [Download the latest fork release](https://github.com/tuklusan/kimi-code/releases/latest)** — native binaries for linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win32-x64 / win32-arm64, tagged `kimi-code-sanyalnet-cli-vX.Y.Z`.
+
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/ci.yml?branch=main&label=CI)](https://github.com/tuklusan/kimi-code/actions/workflows/ci.yml) [![Smoke](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/sanyalnet-smoke.yml?branch=main&label=Company%20smoke%20%C3%97%206%20platforms)](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml) [![Release](https://img.shields.io/github/v/release/tuklusan/kimi-code?label=fork%20release&color=blue)](https://github.com/tuklusan/kimi-code/releases/latest)
+
+For the underlying Kimi Code CLI product — install script, quickstart, editor/IDE integration (ACP), `/mcp-config`, video input, hooks, marketplace plugins, general command reference — see the [upstream README](https://github.com/MoonshotAI/kimi-code#readme) and [upstream docs](https://moonshotai.github.io/kimi-code/en/). This README covers only what the fork adds on top.
+
+## How the software company works
+
+On any fresh session, kimi loads the primer at `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md` (via the fork's [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) autoload) and treats the six persona files under `~/.kimi-code/agents/` as bindable subagents. When you submit a product requirement, the CEO reads the primer and dispatches through five phases in order:
+
+| Phase | Agents | Output |
+|---|---|---|
+| 1 — Inception & Status Audit | `ceo` + `cpo` | Product Requirement Document |
+| 2 — Architectural Blueprint | `cto` | Tech-stack pick + architectural sign-off |
+| 3 — Implementation | `programmer` | Source, written incrementally against the blueprint |
+| 4 — Static Review | `reviewer` | Findings loop with the programmer until zero critical defects |
+| 5 — QA | `tester` | Unit / integration / edge-case tests + Certificate of Compliance |
+
+Each phase's output is the next phase's input; subagents run in isolated contexts and hand back structured results to the parent session, so the transcript stays legible. The full directive lives in [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md); each persona is in [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/).
+
+## Install the fork on a fresh machine
+
+Two steps: install the fork binary, then install the software company setup.
+
+**1. Fork binary.** Download the appropriate zip from the [latest release](https://github.com/tuklusan/kimi-code/releases/latest), unzip, put `kimi` on your `PATH`. On macOS you must clear the quarantine flag before first launch:
+
+```sh
+xattr -d com.apple.quarantine kimi
+```
+
+Verify:
+
+```sh
+kimi --version
+```
+
+**2. Company setup.** Clone this fork and run the installer — it symlinks the six agent personas plus the SDLC directive into `$KIMI_CODE_HOME` (default `~/.kimi-code`) and, with `--autoload`, wires the initial-prompt env var into your `~/.bashrc` so every fresh kimi session starts with the directive pre-loaded in the editor. Idempotent — re-run after `git pull` to refresh.
+
+```sh
+git clone https://github.com/tuklusan/kimi-code.git
+cd kimi-code/sanyalnet-lab
+./bin/install.sh --autoload
+```
+
+On first run the installer prompts (once, silently) for your NVIDIA NIM API key and seeds `~/.kimi-code/config.toml` from the redacted template.
+
+## What this fork adds on top of upstream
+
+- **`sanyalnet-lab/`** — six agent personas + the five-phase SDLC directive + an idempotent installer that deploys the whole software-development company onto any Linux / macOS / Windows box. See [`sanyalnet-lab/README.md`](sanyalnet-lab/README.md).
+- **`KIMI_INITIAL_PROMPT_FILE`** — env var that pre-populates the TUI editor with a file's contents on every fresh session (never on resume). Lets recurring multi-agent primers load one Enter-press away. Docs: [env-vars.md](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only).
+- **Per-provider `send_prompt_cache_key` opt-out** — for strict OpenAI-compatible gateways (NVIDIA NIM, some vLLM deployments) that reject unknown request params with HTTP 400. Auto-set on `provider catalog add` for known strict endpoints; overridable via `kimi provider set <id> --send-prompt-cache-key <true|false>` or by hand in `config.toml`. Retires the pre-fork `nim_proxy.py` workaround (kept under [`sanyalnet-lab/legacy/`](sanyalnet-lab/legacy/) for archaeology).
+- **`KIMI_OUTBOUND_MIN_INTERVAL_MS`** — minimum 1-second gap between model-driven outbound network calls (`fetch_url`, `web_search`). Shared across both tools so a runaway loop cannot hammer external hosts. Default `1000`; set to `0` to disable.
+- **Auto-update disabled by default** — this fork ships its own release binaries under the `kimi-code-sanyalnet-cli-v*` tags; the upstream update channel is a separate distribution and, if left on, would silently replace the fork's binary. Opt back in with `KIMI_CODE_AUTO_UPDATE=1`. Manual `kimi upgrade` still works.
+- **Downstream release workflow** — [`.github/workflows/sanyalnet-release.yml`](.github/workflows/sanyalnet-release.yml) publishes tagged `kimi-code-sanyalnet-cli-vX.Y.Z` releases with six-platform SEA binaries, no macOS signing needed.
 
 ## Multi-platform test results
 
-Every push to `main` runs a smoke test that deploys the SANYALnet software-development company via [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) into a sandboxed `KIMI_CODE_HOME` on each of the six release runners, then asserts that every persona and directive file landed, the seeded `config.toml` carries the `REPLACE_ME` placeholder (never a real API key), the installer is idempotent, and the fork's `KIMI_INITIAL_PROMPT_FILE` autoload wiring is still present in the built source. No LLM calls — this is a fast, deterministic wiring check that runs in about a minute on all six runners in parallel.
+Every push to `main` runs a smoke test that deploys the software-development company via [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) into a sandboxed `KIMI_CODE_HOME` on each of the six release runners, then asserts that every persona and directive file landed, the seeded `config.toml` carries the `REPLACE_ME` placeholder (never a real API key), the installer is idempotent, and the fork's `KIMI_INITIAL_PROMPT_FILE` autoload wiring is still present in the built source. No LLM calls — this is a fast, deterministic wiring check that runs in about a minute on all six runners in parallel.
 
 | Runner | OS image | Company install | Runtime |
 |---|---|---|---|
@@ -36,125 +76,29 @@ Live status via the "Company smoke × 6 platforms" badge above; the raw run hist
 
 The paired [Sanyalnet E2E Fibonacci](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-e2e-fibonacci.yml) workflow (manual dispatch) drives the full five-phase pipeline against a real NVIDIA NIM model and asserts that the company delivers a working Fibonacci program plus documentation — see [`.github/workflows/sanyalnet-e2e-fibonacci.yml`](.github/workflows/sanyalnet-e2e-fibonacci.yml) for the acceptance criteria. It is gated on the `NVIDIA_API_KEY` repo secret and is a no-op green while that secret is unset.
 
-## Multi-platform screenshots
-
-_Coming soon._ Full-TUI captures of the software-development company with all six subagents active (CEO handing off to CPO, CTO issuing the architectural sign-off, programmer streaming edits while the reviewer flags a defect, tester issuing a QA certificate) will land here once the E2E workflow has been dispatched at least once with the `NVIDIA_API_KEY` secret set. Each of the six platform runners uploads a `sanyalnet-e2e-<target>` artefact that contains the finished company workspace; the runner terminal captures will be committed under `docs/media/screenshots/<target>.png` from that same E2E run. Not fabricating placeholder images here — the section is intentionally blank until real captures exist.
-
-## What is Kimi Code CLI
-
-Kimi Code CLI is an AI coding agent that runs in your terminal — it can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It works out of the box with Moonshot AI’s Kimi models and can also be configured to use other compatible providers.
-
-## Install
-
-Install with the official script. No Node.js required.
-
-- **macOS or Linux**:
+## Develop this fork
 
 ```sh
-curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
-```
-
-- **Windows (PowerShell)**:
-
-```powershell
-irm https://code.kimi.com/kimi-code/install.ps1 | iex
-```
-
-> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch because Kimi Code CLI uses the bundled Git Bash as its shell environment. If Git Bash is installed in a custom location, set `KIMI_SHELL_PATH` to the absolute path of `bash.exe`.
-
-Then, run it with a new shell session:
-
-```sh
-kimi --version
-```
-
-For npm install, upgrade, uninstall, see [Getting Started](https://moonshotai.github.io/kimi-code/en/guides/getting-started).
-
-## Quick Start
-
-Open a project and start the interactive UI:
-
-```sh
-cd your-project
-kimi
-```
-
-On first launch, run `/login` inside Kimi Code CLI and choose either Kimi Code OAuth or a Moonshot AI Open Platform API key. After login, try your first task:
-
-```
-Take a look at this project and explain its main directories.
-```
-
-## Key Features
-
-- **Single-binary distribution.** Install with one command: no Node.js setup, PATH gymnastics, or global module conflicts.
-- **Blazing-fast startup.** The TUI is ready in milliseconds, so starting a session never feels heavy.
-- **Purpose-built TUI.** A carefully tuned interface, optimized end to end for long, focused agent sessions.
-- **Video input.** Drop a screen recording or demo clip into the chat and let the agent watch what is hard to describe in words — turn a reference clip into a LUT, a long video into a short, a screen recording into working code, and more.
-- **AI-native MCP configuration.** Add, edit, and authenticate Model Context Protocol servers conversationally with `/mcp-config`, without hand-editing JSON.
-- **Rich plugin ecosystem.** Install skills, MCP servers, and data sources from the marketplace or any GitHub repo, with each install's trust level surfaced up front.
-- **Subagents for focused, parallel work.** Dispatch built-in `coder`, `explore`, and `plan` subagents in isolated contexts while keeping the main conversation clean.
-- **Lifecycle hooks.** Run local commands at key points to gate risky tool calls, audit decisions, trigger desktop notifications, or connect to your own automation.
-- **Editor & IDE integration (ACP).** Drive a Kimi Code CLI session straight from Zed, JetBrains, or any [Agent Client Protocol](https://agentclientprotocol.com/) client with `kimi acp`.
-
-## Use it in your editor (ACP)
-
-Kimi Code CLI speaks the [Agent Client Protocol](https://agentclientprotocol.com/), so ACP-compatible editors and IDEs (Zed, JetBrains, …) can drive a session over stdio. Log in once, then point your editor at the `kimi acp` subcommand — no extra login needed.
-
-For Zed, add this to `~/.config/zed/settings.json`:
-
-```json
-{
-  "agent_servers": {
-    "Kimi Code CLI": {
-      "type": "custom",
-      "command": "kimi",
-      "args": ["acp"],
-      "env": {}
-    }
-  }
-}
-```
-
-Then open a new conversation in Zed's Agent panel. See [Using in IDEs](https://moonshotai.github.io/kimi-code/en/guides/ides) for JetBrains setup and troubleshooting, and the [`kimi acp` reference](https://moonshotai.github.io/kimi-code/en/reference/kimi-acp) for the full capability matrix.
-
-## Docs
-
-- [Getting Started](https://moonshotai.github.io/kimi-code/en/guides/getting-started)
-- [Interaction and approvals](https://moonshotai.github.io/kimi-code/en/guides/interaction)
-- [Sessions](https://moonshotai.github.io/kimi-code/en/guides/sessions)
-- [Using in IDEs (ACP)](https://moonshotai.github.io/kimi-code/en/guides/ides)
-- [Configuration](https://moonshotai.github.io/kimi-code/en/configuration/config-files)
-- [Command reference](https://moonshotai.github.io/kimi-code/en/reference/kimi-command)
-
-## Develop
-
-Requirements: Node.js ≥ 24.15.0, pnpm 10.33.0.
-
-```sh
-git clone https://github.com/MoonshotAI/kimi-code.git
+git clone https://github.com/tuklusan/kimi-code.git
 cd kimi-code
 pnpm install
+pnpm build
+pnpm test
 ```
 
-```sh
-pnpm dev:cli    # run the CLI in dev mode
-pnpm test       # run tests
-pnpm typecheck  # TypeScript check
-pnpm lint       # oxlint
-pnpm build      # build all packages
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
+Node.js `≥ 24.15.0`, pnpm `10.33.0`. Same upstream toolchain — the fork adds no new build-time dependencies.
 
 ## Community
 
-- [Issues](https://github.com/MoonshotAI/kimi-code/issues)
-- For security vulnerabilities, see [SECURITY.md](SECURITY.md).
+- Fork-specific issues: [tuklusan/kimi-code/issues](https://github.com/tuklusan/kimi-code/issues)
+- Upstream Kimi Code CLI issues: [MoonshotAI/kimi-code/issues](https://github.com/MoonshotAI/kimi-code/issues)
+- Security: see [SECURITY.md](SECURITY.md).
 
 ## Acknowledgements
 
-Our TUI is built on top of [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui). We thank the authors of `pi-tui` for their valuable work.
+- [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) — the upstream project this fork is built on.
+- [ChatDev](https://github.com/OpenBMB/ChatDev) — inspiration for the multi-role SDLC pipeline.
+- [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) — the TUI foundation, via upstream.
 
 ## License
 

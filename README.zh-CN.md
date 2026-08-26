@@ -1,132 +1,105 @@
-# Kimi Code CLI
+# SANYALnet Labs Kimi Code CLI 软件开发公司
 
-> **Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.** (个人下游分支 `tuklusan/kimi-code`，包含本地改动，不打算回合并到上游。)
+> **[MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) 的个人下游分支，包含本地改动，不打算回合并到上游。**
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/zh/)
+一个经过调优的 Kimi Code CLI 构建版，开箱即用地提供一个预配置的六角色 AI **软件开发公司** —— 灵感来自 [ChatDev](https://github.com/OpenBMB/ChatDev)。六个专业子代理（CEO、CPO、CTO、程序员、评审员、测试员）通过五阶段 SDLC 流水线协作，把自然语言产品需求变成经过评审和测试的可运行代码。
 
-[Documentation](https://moonshotai.github.io/kimi-code/zh/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [English](README.md)
+**➡ [下载最新分支发行版](https://github.com/tuklusan/kimi-code/releases/latest)** —— 覆盖 linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win32-x64 / win32-arm64 的原生二进制，标签为 `kimi-code-sanyalnet-cli-vX.Y.Z`。
 
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/ci.yml?branch=main&label=CI)](https://github.com/tuklusan/kimi-code/actions/workflows/ci.yml) [![Smoke](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/sanyalnet-smoke.yml?branch=main&label=Company%20smoke%20%C3%97%206%20platforms)](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml) [![Release](https://img.shields.io/github/v/release/tuklusan/kimi-code?label=fork%20release&color=blue)](https://github.com/tuklusan/kimi-code/releases/latest)
 
-![Kimi Code 的使用演示](./docs/media/intro.gif)
+关于底层 Kimi Code CLI 产品 —— 安装脚本、快速上手、编辑器/IDE 集成（ACP）、`/mcp-config`、视频输入、hooks、插件市场、通用命令参考 —— 请参见 [上游 README](https://github.com/MoonshotAI/kimi-code#readme) 和 [上游文档](https://moonshotai.github.io/kimi-code/zh/)。本 README 只介绍本分支在其之上新增的部分。
 
+## 软件公司的工作原理
 
-## 什么是 Kimi Code CLI
+任何全新会话启动时，kimi 都会通过本分支的 [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) 自动加载 `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md`，并把 `~/.kimi-code/agents/` 下的六个角色文件当作可绑定子代理。当你提交一个产品需求时，CEO 读取指令，按以下顺序调度五个阶段：
 
-Kimi Code CLI 是一个运行在终端里的 AI 编程 agent，可以帮你读写代码、执行 shell 命令、检索文件、抓取网页，并根据反馈自主决定下一步动作。开箱即用对接 Moonshot AI 的 Kimi 模型，也可指向其他兼容厂商。
+| 阶段 | 代理 | 输出 |
+|---|---|---|
+| 1 — 立项与状态审计 | `ceo` + `cpo` | 产品需求文档（PRD） |
+| 2 — 架构蓝图 | `cto` | 技术栈选型 + 架构签字 |
+| 3 — 实现 | `programmer` | 按蓝图增量编写源代码 |
+| 4 — 静态评审 | `reviewer` | 与程序员循环反馈，直到零关键缺陷 |
+| 5 — QA | `tester` | 单元 / 集成 / 边界测试 + 合规证书 |
 
-## 安装
+每个阶段的输出即下一阶段的输入；子代理在隔离上下文中运行并把结构化结果交回主会话，所以主会话记录保持清晰易读。完整指令位于 [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md)；每个角色定义在 [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/) 下。
 
-推荐使用官方安装脚本，不需要提前安装 Node.js。
+## 在新机器上安装本分支
 
-- **macOS / Linux**：
+两步走：安装分支二进制，然后安装软件公司配置。
+
+**1. 分支二进制。** 从 [最新发行版](https://github.com/tuklusan/kimi-code/releases/latest) 下载对应平台的 zip，解压，把 `kimi` 放到 `PATH` 上。macOS 首次启动前必须清除隔离标记：
 
 ```sh
-curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
+xattr -d com.apple.quarantine kimi
 ```
 
-- **Windows（PowerShell）**：
-
-```powershell
-irm https://code.kimi.com/kimi-code/install.ps1 | iex
-```
-
-> Windows 用户首次启动前还需要安装 [Git for Windows](https://gitforwindows.org/)，Kimi Code CLI 会使用其中的 Git Bash 作为 Shell 环境。如果 Git Bash 安装在非标准路径，请把 `KIMI_SHELL_PATH` 设为 `bash.exe` 的绝对路径。
-
-随后在新的终端会话中运行：
+验证：
 
 ```sh
 kimi --version
 ```
 
-npm 安装、升级、卸载方式，见[快速上手](https://moonshotai.github.io/kimi-code/zh/guides/getting-started)。
-
-## 快速开始
-
-进入项目目录并启动交互界面：
+**2. 公司配置。** 克隆本分支并运行安装脚本 —— 它把六个代理角色和 SDLC 指令软链到 `$KIMI_CODE_HOME`（默认 `~/.kimi-code`），并在 `--autoload` 模式下把初始提示环境变量写入 `~/.bashrc`，让每个全新 kimi 会话打开时编辑器就已经预填好指令。幂等 —— `git pull` 后重跑即可刷新。
 
 ```sh
-cd your-project
-kimi
+git clone https://github.com/tuklusan/kimi-code.git
+cd kimi-code/sanyalnet-lab
+./bin/install.sh --autoload
 ```
 
-首次启动时，在 Kimi Code CLI 里输入 `/login`，选择 Kimi Code OAuth 或 Moonshot AI Open Platform API 密钥登录。登录完成后，可以先让它熟悉项目：
+首次运行时安装脚本会（一次性、静默地）询问你的 NVIDIA NIM API key，并根据脱敏模板生成 `~/.kimi-code/config.toml`。
 
-```
-帮我看一下这个项目的目录结构，简单介绍一下每个目录是做什么的
-```
+## 本分支在上游之上新增的内容
 
-## 核心特性
+- **`sanyalnet-lab/`** —— 六个代理角色 + 五阶段 SDLC 指令 + 一个幂等安装脚本，把整个软件开发公司部署到任意 Linux / macOS / Windows 机器。参见 [`sanyalnet-lab/README.md`](sanyalnet-lab/README.md)。
+- **`KIMI_INITIAL_PROMPT_FILE`** —— 环境变量，在每次全新会话（永不在恢复时）预填 TUI 编辑器。让循环使用的多代理引导词只差一次回车。文档：[env-vars.md](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only)。
+- **按 provider 的 `send_prompt_cache_key` 开关** —— 针对严格校验请求体的 OpenAI 兼容网关（NVIDIA NIM、部分 vLLM 部署）—— 它们会用 HTTP 400 拒绝未知参数。已知严格端点在 `provider catalog add` 时自动关闭；可通过 `kimi provider set <id> --send-prompt-cache-key <true|false>` 或手工编辑 `config.toml` 覆盖。取代了分支之前的 `nim_proxy.py` 变通方案（保留在 [`sanyalnet-lab/legacy/`](sanyalnet-lab/legacy/) 作为存档）。
+- **`KIMI_OUTBOUND_MIN_INTERVAL_MS`** —— 模型驱动的对外网络调用（`fetch_url`、`web_search`）之间最小 1 秒的间隔。两个工具共用同一节流器，跨工具的失控循环也会被限速。默认 `1000`；设为 `0` 关闭。
+- **自动更新默认关闭** —— 本分支通过 `kimi-code-sanyalnet-cli-v*` 标签发布自己的原生二进制；上游更新通道是独立发行渠道，若不关闭会静默把分支二进制替换为上游版本。用 `KIMI_CODE_AUTO_UPDATE=1` 显式打开。手动 `kimi upgrade` 仍然可用。
+- **下游发行工作流** —— [`.github/workflows/sanyalnet-release.yml`](.github/workflows/sanyalnet-release.yml) 发布带标签的 `kimi-code-sanyalnet-cli-vX.Y.Z` 版本，包含六平台 SEA 二进制，不需要 macOS 签名。
 
-- **二进制发行，零环境依赖** 一行命令安装，不需要预装 Node.js，不用折腾 PATH，也不会和全局模块冲突。
-- **极速启动** TUI 在毫秒级就绪，开一个新会话没有任何心智负担。
-- **精致的 TUI 体验** 端到端打磨的交互界面，专为长时间、专注的 Agent 会话优化。
-- **视频也能输入** 把屏幕录像、演示视频拖进对话，让 Agent 看那些难以用文字描述的东西——把参考片段做成 LUT、把长视频剪成短视频、把录屏变成代码，等等。
-- **AI-native 的 MCP 配置** 通过 `/mcp-config` 对话式添加、编辑、认证 MCP 服务器，无需手写 JSON。
-- **丰富的插件生态** 从插件市场或任意 GitHub 仓库安装 skills、MCP 服务器和数据源，每次安装都会标明来源的信任级别。
-- **子 Agent 聚焦并行工作** 内置 `coder`、`explore`、`plan` 子 Agent 在隔离上下文中处理子任务，主对话保持清爽。
-- **生命周期 hooks** 在关键节点执行本地命令：拦截高风险工具调用、审计决策、发送桌面通知，或对接你自己的自动化脚本。
-- **编辑器 / IDE 集成（ACP）** 用 `kimi acp` 让 Zed、JetBrains 等任意 [Agent Client Protocol](https://agentclientprotocol.com/) 客户端直接驱动会话。
+## 多平台测试结果
 
+每次向 `main` 推送都会运行一个冒烟测试：通过 [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) 把软件开发公司部署到六台发行 runner 的沙箱 `KIMI_CODE_HOME`，然后断言每个角色文件和指令都到位、种子 `config.toml` 携带 `REPLACE_ME` 占位符（永远不是真 key）、安装脚本幂等、并且分支的 `KIMI_INITIAL_PROMPT_FILE` 自动加载布线仍存在于构建源码中。不调用 LLM —— 这是一个快速、确定性的布线检查，六台 runner 并行大约一分钟完成。
 
-## 在编辑器里使用（ACP）
+| Runner | OS 镜像 | 公司安装 | 用时 |
+|---|---|---|---|
+| linux-x64 | `ubuntu-24.04` | ✅ 通过 | ~10 秒 |
+| linux-arm64 | `ubuntu-24.04-arm` | ✅ 通过 | ~10 秒 |
+| darwin-x64 (Intel) | `macos-15-intel` | ✅ 通过 | ~15 秒 |
+| darwin-arm64 (Apple Silicon) | `macos-15` | ✅ 通过 | ~15 秒 |
+| win32-x64 | `windows-2025-vs2026` | ✅ 通过 | ~25 秒 |
+| win32-arm64 | `windows-11-arm` | ✅ 通过 | ~25 秒 |
 
-Kimi Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)，ACP 兼容的编辑器 / IDE（Zed、JetBrains……）可以通过 stdio 直接驱动会话。登录一次后，把编辑器指向 `kimi acp` 子命令即可，无需重复登录。
+实时状态见上方"Company smoke × 6 platforms"徽章；完整运行历史见 [Actions → Sanyalnet Company Smoke Test](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml)。
 
-以 Zed 为例，在 `~/.config/zed/settings.json` 中加入：
+配套的 [Sanyalnet E2E Fibonacci](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-e2e-fibonacci.yml) 工作流（手动触发）以真实 NVIDIA NIM 模型运行完整的五阶段流水线，并断言公司交付了一个可工作的 Fibonacci 程序 + 文档 —— 验收标准见 [`.github/workflows/sanyalnet-e2e-fibonacci.yml`](.github/workflows/sanyalnet-e2e-fibonacci.yml)。它依赖 `NVIDIA_API_KEY` 仓库 secret，在 secret 未设置时是绿色的空操作。
 
-```json
-{
-  "agent_servers": {
-    "Kimi Code CLI": {
-      "type": "custom",
-      "command": "kimi",
-      "args": ["acp"],
-      "env": {}
-    }
-  }
-}
-```
-
-随后在 Zed 的 Agent 面板新建对话即可。JetBrains 配置与排障见[在 IDE 中使用](https://moonshotai.github.io/kimi-code/zh/guides/ides)，完整能力矩阵见 [`kimi acp` 参考](https://moonshotai.github.io/kimi-code/zh/reference/kimi-acp)。
-
-## 文档
-
-- [快速上手](https://moonshotai.github.io/kimi-code/zh/guides/getting-started)
-- [交互与审批](https://moonshotai.github.io/kimi-code/zh/guides/interaction)
-- [会话](https://moonshotai.github.io/kimi-code/zh/guides/sessions)
-- [在 IDE 中使用（ACP）](https://moonshotai.github.io/kimi-code/zh/guides/ides)
-- [配置](https://moonshotai.github.io/kimi-code/zh/configuration/config-files)
-- [命令参考](https://moonshotai.github.io/kimi-code/zh/reference/kimi-command)
-
-## 本地开发
-
-环境要求：Node.js ≥ 24.15.0，pnpm 10.33.0。
+## 开发本分支
 
 ```sh
-git clone https://github.com/MoonshotAI/kimi-code.git
+git clone https://github.com/tuklusan/kimi-code.git
 cd kimi-code
 pnpm install
+pnpm build
+pnpm test
 ```
 
-```sh
-pnpm dev:cli    # 以开发模式运行 CLI
-pnpm test       # 运行测试
-pnpm typecheck  # TypeScript 检查
-pnpm lint       # 运行 oxlint
-pnpm build      # 构建所有包
-```
-
-完整贡献流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+Node.js `≥ 24.15.0`，pnpm `10.33.0`。与上游同一工具链 —— 本分支未引入新的构建时依赖。
 
 ## 社区
 
-- [Issues](https://github.com/MoonshotAI/kimi-code/issues)
-- 安全漏洞反馈，请见 [SECURITY.md](SECURITY.md)。
+- 分支专属 issues：[tuklusan/kimi-code/issues](https://github.com/tuklusan/kimi-code/issues)
+- 上游 Kimi Code CLI issues：[MoonshotAI/kimi-code/issues](https://github.com/MoonshotAI/kimi-code/issues)
+- 安全：见 [SECURITY.md](SECURITY.md)。
 
-## 致谢
+## 鸣谢
 
-我们的 TUI 构建在 [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) 之上。我们衷心感谢 `pi-tui` 作者的工作。
+- [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) —— 本分支所基于的上游项目。
+- [ChatDev](https://github.com/OpenBMB/ChatDev) —— 多角色 SDLC 流水线的灵感来源。
+- [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) —— 经由上游继承的 TUI 基础库。
 
-## 许可证
+## 许可
 
-基于 [MIT](LICENSE) 协议发布。
+在 [MIT License](LICENSE) 下发布。
