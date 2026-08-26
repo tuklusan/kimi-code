@@ -12,17 +12,17 @@ For the underlying Kimi Code CLI product — install script, quickstart, editor/
 
 ## How the software company works
 
-On any fresh session, kimi loads the primer at `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md` (via the fork's [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) autoload) and treats the six persona files under `~/.kimi-code/agents/` as bindable subagents. When you submit a product requirement, the CEO reads the primer and dispatches through five phases in order:
+On any fresh session, kimi loads the primer at `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md` (via the fork's [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) autoload) and treats the six persona files under `~/.kimi-code/agents/` as bindable subagents. When you press Enter on the pre-loaded directive, the CEO and CPO run **Phase 1 automatically** — they read the current project folder, synthesise a **Project Status Briefing**, then **HALT and wait for your instructions**. Phases 2 through 5 are defined but gated: they never begin without an explicit operator directive naming which phase to enter and what goal to pursue.
 
-| Phase | Agents | Output |
-|---|---|---|
-| 1 — Inception & Status Audit | `ceo` + `cpo` | Product Requirement Document |
-| 2 — Architectural Blueprint | `cto` | Tech-stack pick + architectural sign-off |
-| 3 — Implementation | `programmer` | Source, written incrementally against the blueprint |
-| 4 — Static Review | `reviewer` | Findings loop with the programmer until zero critical defects |
-| 5 — QA | `tester` | Unit / integration / edge-case tests + Certificate of Compliance |
+| Phase | Agents | Output | Trigger |
+|---|---|---|---|
+| 1 — Inception & Status Audit | `ceo` + `cpo` | Project Status Briefing + a menu of candidate next-step tasks | Automatic on session start; HALTS at the end |
+| 2 — Architectural Blueprint | `cto` | Tech-stack pick + architectural sign-off | Operator approves a Phase 1 goal |
+| 3 — Implementation | `programmer` | Source, written incrementally against the blueprint | Operator approves the Phase 2 blueprint |
+| 4 — Static Review | `reviewer` | Findings loop with the programmer until zero critical defects | Programmer reports Phase 3 complete |
+| 5 — QA | `tester` | Unit / integration / edge-case tests + Certificate of Compliance | Reviewer signs Phase 4 off |
 
-Each phase's output is the next phase's input; subagents run in isolated contexts and hand back structured results to the parent session, so the transcript stays legible. The full directive lives in [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md); each persona is in [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/).
+Each phase's output is the next phase's input; subagents run in isolated contexts and hand back structured results to the parent session, so the transcript stays legible. The full directive (with the HALT-after-Phase-1 rule and the gate preconditions for every downstream phase) lives in [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md); each persona is in [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/).
 
 ## Install the fork on a fresh machine
 

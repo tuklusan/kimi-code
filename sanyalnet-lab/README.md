@@ -13,20 +13,37 @@ reproducible on any lab box.
 1. A fresh kimi session loads the primer in `SDLC-Multi-Agent-Project-Directive.md`
    (via the fork's `KIMI_INITIAL_PROMPT_FILE` autoload) and treats the six
    persona files under `agents/` as bindable subagents.
-2. You submit a natural-language product requirement (e.g. "print the first
-   20 Fibonacci numbers"). The CEO reads the primer and drives the five
-   phases in order:
-   1. **Inception & Status Audit** — `ceo` + `cpo` synthesise a PRD.
-   2. **Architectural Blueprint** — `cto` picks the tech stack and signs
-      off the design.
-   3. **Implementation** — `programmer` writes the source incrementally.
-   4. **Static Review** — `reviewer` audits the diff, loops with the
-      programmer until zero critical defects remain.
-   5. **QA** — `tester` designs and runs unit / integration / edge-case
-      tests, then issues a Certificate of Compliance.
-3. Each phase's output is the next phase's input; subagents run in
+2. You press Enter on the pre-loaded directive. Phase 1 runs automatically:
+   the `ceo` + `cpo` recursively read the current project folder, then hand
+   you a **Project Status Briefing** (identity, tech stack, repo shape,
+   current state with file/line citations, open questions, and a menu of
+   ready-to-run tasks). The company then **HALTS** and asks for your
+   next-step directive.
+3. You reply with one of:
+   - `proceed to Phase 2 with goal: <goal>` — approves a goal and hands
+     control to the `cto` for a blueprint.
+   - `focus only on <scope>` — narrows the audit.
+   - `answer <question>` — the operator resolves an open question from
+     the briefing before any downstream work runs.
+   - `no further action` — the company stands down.
+4. Downstream phases only run after an explicit operator directive:
+   - **Phase 2 — Architectural Blueprint** (`cto`): tech-stack pick +
+     architectural sign-off, presented to you for approval.
+   - **Phase 3 — Implementation** (`programmer`): incremental source
+     against the approved blueprint.
+   - **Phase 4 — Static Review** (`reviewer`): audits the diff, loops
+     with the programmer until zero critical defects.
+   - **Phase 5 — QA** (`tester`): unit / integration / edge-case tests,
+     followed by a Certificate of Compliance.
+5. Each phase's output is the next phase's input; subagents run in
    isolated contexts and hand back structured results, so the main
    session transcript stays legible.
+
+The **halt-after-Phase-1** design is deliberate: it lets you drop the
+company into any existing codebase, get a fast, evidence-backed
+briefing, and only then decide what work is worth spending LLM tokens
+on. Nothing gets refactored, deleted, or written without your explicit
+approval.
 
 ## Multi-platform verification
 

@@ -12,17 +12,17 @@
 
 ## 软件公司的工作原理
 
-任何全新会话启动时，kimi 都会通过本分支的 [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) 自动加载 `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md`，并把 `~/.kimi-code/agents/` 下的六个角色文件当作可绑定子代理。当你提交一个产品需求时，CEO 读取指令，按以下顺序调度五个阶段：
+任何全新会话启动时，kimi 都会通过本分支的 [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) 自动加载 `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md`，并把 `~/.kimi-code/agents/` 下的六个角色文件当作可绑定子代理。当你在预加载的指令上按回车后，CEO 与 CPO **自动执行第 1 阶段** —— 阅读当前项目文件夹、综合出一份 **项目状态简报**，然后 **暂停等待你的指示**。第 2 到第 5 阶段有定义但受控：没有你明确指出进入哪个阶段、追求什么目标，它们绝不启动。
 
-| 阶段 | 代理 | 输出 |
-|---|---|---|
-| 1 — 立项与状态审计 | `ceo` + `cpo` | 产品需求文档（PRD） |
-| 2 — 架构蓝图 | `cto` | 技术栈选型 + 架构签字 |
-| 3 — 实现 | `programmer` | 按蓝图增量编写源代码 |
-| 4 — 静态评审 | `reviewer` | 与程序员循环反馈，直到零关键缺陷 |
-| 5 — QA | `tester` | 单元 / 集成 / 边界测试 + 合规证书 |
+| 阶段 | 代理 | 输出 | 触发条件 |
+|---|---|---|---|
+| 1 — 立项与状态审计 | `ceo` + `cpo` | 项目状态简报 + 下一步候选任务菜单 | 会话启动时自动进入；末尾暂停 |
+| 2 — 架构蓝图 | `cto` | 技术栈选型 + 架构签字 | 操作员核准了第 1 阶段的某个目标 |
+| 3 — 实现 | `programmer` | 按蓝图增量编写源代码 | 操作员核准了第 2 阶段的蓝图 |
+| 4 — 静态评审 | `reviewer` | 与程序员循环反馈，直到零关键缺陷 | 程序员报告第 3 阶段完成 |
+| 5 — QA | `tester` | 单元 / 集成 / 边界测试 + 合规证书 | 评审员完成第 4 阶段签字 |
 
-每个阶段的输出即下一阶段的输入；子代理在隔离上下文中运行并把结构化结果交回主会话，所以主会话记录保持清晰易读。完整指令位于 [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md)；每个角色定义在 [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/) 下。
+每个阶段的输出即下一阶段的输入；子代理在隔离上下文中运行并把结构化结果交回主会话，所以主会话记录保持清晰易读。完整指令（包含"第 1 阶段后暂停"规则及各下游阶段的前置条件）位于 [`sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md`](sanyalnet-lab/SDLC-Multi-Agent-Project-Directive.md)；每个角色定义在 [`sanyalnet-lab/agents/`](sanyalnet-lab/agents/) 下。
 
 ## 在新机器上安装本分支
 

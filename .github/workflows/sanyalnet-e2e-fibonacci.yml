@@ -156,6 +156,10 @@ jobs:
             echo
             echo "---"
             echo
+            echo "## Operator directive (overrides the default HALT-after-Phase-1 rule)"
+            echo
+            echo "This is a fully automated acceptance test. There is no interactive operator; therefore, run Phases 1 through 5 back-to-back without pausing for any approval, question, or confirmation. Treat every 'HALT and wait' instruction in the directive above as replaced by 'log a one-line status and continue'."
+            echo
             echo "## Product requirement"
             echo
             echo "Build a small application in the easiest language available on this box that prints the first 20 numbers of the Fibonacci sequence, one per line, starting with 0 and 1. The application must:"
