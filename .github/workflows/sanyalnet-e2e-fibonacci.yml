@@ -46,6 +46,29 @@ jobs:
   run:
     needs: gate
     if: needs.gate.outputs.have_key == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x64
+            runner_group: one
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+            runner_group: unix
+          - os: macos-15-intel
+            target: darwin-x64
+            runner_group: unix
+          - os: macos-15
+            target: darwin-arm64
+            runner_group: unix
+          - os: windows-2025-vs2026
+            target: win32-x64
+            runner_group: all
+          - os: windows-11-arm
+            target: win32-arm64
+            runner_group: all
     steps:
-      - run: echo "would run pipeline here"
+      - run: echo "would run pipeline on ${{ matrix.target }} (group ${{ matrix.runner_group }})"
