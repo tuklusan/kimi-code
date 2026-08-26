@@ -17,7 +17,6 @@ describe('MinIntervalGate', () => {
     await gate.wait();
     await gate.wait();
     const elapsed = Date.now() - t0;
-    // 3 waiters: 0 + ~50 + ~50 = ~100ms. Allow generous margin for CI jitter.
     expect(elapsed).toBeGreaterThanOrEqual(95);
     expect(elapsed).toBeLessThan(300);
   });
@@ -28,7 +27,6 @@ describe('MinIntervalGate', () => {
     const results = await Promise.all([gate.wait(), gate.wait(), gate.wait()]);
     const elapsed = Date.now() - t0;
     expect(results).toEqual([undefined, undefined, undefined]);
-    // 3 concurrent → ~80ms total (2 gaps of 40ms).
     expect(elapsed).toBeGreaterThanOrEqual(75);
   });
 
@@ -51,13 +49,11 @@ describe('MinIntervalGate', () => {
 
   it('aborts the wait when the signal fires and lets the next waiter run', async () => {
     const gate = new MinIntervalGate(200);
-    await gate.wait(); // arm the interval
+    await gate.wait();
     const ac = new AbortController();
     const rejected = gate.wait(ac.signal);
-    // Fire abort while the second waiter is sleeping.
     setTimeout(() => ac.abort(), 10);
     await expect(rejected).rejects.toMatchObject({ name: 'AbortError' });
-    // Queue must still advance; the third waiter completes normally.
     await gate.wait();
   });
 

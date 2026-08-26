@@ -160,7 +160,7 @@ function makeDeps(
   return {
     exePath,
     argv: ['node', exePath, '--flag', 'value'],
-    env: { PATH: '/usr/bin' },
+    env: { PATH: '/usr/bin', KIMI_CODE_AUTO_UPDATE: '1' },
     currentVersion: CURRENT_VERSION,
     isNative: true,
     exitImpl: vi.fn(),

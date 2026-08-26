@@ -34,8 +34,6 @@ export class WebFetchService implements IWebFetchService {
 
   getUrlFetcher(): UrlFetcher {
     const inner = this.fromServicesConfig() ?? this.fromManagedOAuth() ?? this.localFetcher;
-    // Throttle model-driven outbound calls. Shared with web-search so a
-    // runaway loop across both tools still respects the minimum interval.
     return throttleUrlFetcher(inner);
   }
 
@@ -87,9 +85,6 @@ function nonEmptyString(value: string | undefined): string | undefined {
 }
 
 function throttleUrlFetcher(inner: UrlFetcher): UrlFetcher {
-  // Proxy preserves the prototype chain so `instanceof LocalFetchURLProvider`
-  // / `MoonshotFetchURLProvider` checks (used by callers to introspect which
-  // backend resolved) still succeed. Only `fetch` is intercepted.
   return new Proxy(inner, {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);

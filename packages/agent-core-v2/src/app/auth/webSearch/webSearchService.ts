@@ -95,11 +95,6 @@ function nonEmptyString(value: string | undefined): string | undefined {
 }
 
 function throttleWebSearchProvider(inner: WebSearchProvider): WebSearchProvider {
-  // Same shared gate as URL fetches — one interval covers both surfaces so
-  // a runaway loop across the two tools still spaces out to disk. Proxy
-  // preserves the prototype chain so any `instanceof MoonshotWebSearchProvider`
-  // checks against the returned value still pass; only `search` is
-  // intercepted.
   return new Proxy(inner, {
     get(target, prop, receiver) {
       const value = Reflect.get(target, prop, receiver);

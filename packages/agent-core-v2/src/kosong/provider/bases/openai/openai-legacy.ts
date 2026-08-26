@@ -103,10 +103,6 @@ export interface OpenAILegacyOptions {
   toolMessageConversion?: ToolMessageConversion | undefined;
   clientFactory?: (auth: ProviderRequestAuth) => OpenAI;
   hooks?: OpenAIChatCompletionsHooks | undefined;
-  // When true, suppress the default `prompt_cache_key` injection at
-  // `_resolveRequestKwargs`. A trait-supplied `hooks.cacheKey` still runs,
-  // so a vendor that encodes the key under a different name keeps working.
-  // Sourced from the provider config knob `send_prompt_cache_key = false`.
   omitPromptCacheKey?: boolean | undefined;
 }
 
@@ -659,13 +655,8 @@ export class OpenAILegacyChatProvider implements ChatProvider {
     if (options?.cacheKey !== undefined) {
       const hooked = this._hooks?.cacheKey?.(options.cacheKey);
       if (hooked !== undefined) {
-        // A vendor hook takes precedence: it may encode the key under a
-        // different name than `prompt_cache_key`.
         kwargs = { ...kwargs, ...hooked };
       } else if (!this._omitPromptCacheKey) {
-        // Default OpenAI-native encoding. Suppressed when the provider config
-        // set `send_prompt_cache_key = false` (strict gateways like NVIDIA NIM
-        // reject unknown params with HTTP 400).
         kwargs = { ...kwargs, prompt_cache_key: options.cacheKey };
       }
     }

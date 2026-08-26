@@ -366,9 +366,6 @@ export interface OpenAIResponsesOptions {
   toolMessageConversion?: ToolMessageConversion | undefined;
   clientFactory?: (auth: ProviderRequestAuth) => OpenAI;
   convertError?: (error: unknown) => ChatProviderError | undefined;
-  // When true, suppress the default `prompt_cache_key` injection. Sourced
-  // from the provider config knob `send_prompt_cache_key = false` (strict
-  // gateways like NVIDIA NIM reject unknown params with HTTP 400).
   omitPromptCacheKey?: boolean | undefined;
 }
 
@@ -1086,8 +1083,6 @@ export class OpenAIResponsesChatProvider implements ChatProvider {
     let kwargs: Record<string, unknown> = { ...this._generationKwargs };
 
     if (options?.cacheKey !== undefined && !this._omitPromptCacheKey) {
-      // Suppressed when the provider config set `send_prompt_cache_key = false`
-      // (strict gateways like NVIDIA NIM reject unknown params with HTTP 400).
       kwargs = { ...kwargs, prompt_cache_key: options.cacheKey };
     }
     if (options?.sampling?.temperature !== undefined) {

@@ -24,11 +24,6 @@ export interface ProviderConfig {
   env?: Record<string, string>;
   source?: Record<string, unknown>;
 
-  // Per-provider opt-out for the OpenAI-native `prompt_cache_key` request
-  // field. Some strict OpenAI-compatible gateways (NVIDIA NIM, some vLLM
-  // deployments) reject unknown params with HTTP 400. When explicitly set to
-  // `false`, the openai / openai_responses bases skip the field entirely.
-  // Unset / `true` preserves the legacy always-send behavior.
   sendPromptCacheKey?: boolean;
 }
 
