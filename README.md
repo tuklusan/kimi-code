@@ -4,7 +4,7 @@
 
 A tuned build of the Kimi Code CLI that ships a preconfigured six-role AI **software development company** out of the box — inspired by [ChatDev](https://github.com/OpenBMB/ChatDev). A small hierarchy of specialised subagents (CEO, CPO, CTO, programmer, reviewer, tester) collaborates through a five-phase SDLC pipeline to turn a natural-language product requirement into working, reviewed, tested code.
 
-**➡ [Download the latest fork release](https://github.com/tuklusan/kimi-code/releases/latest)** — native binaries for linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win32-x64 / win32-arm64, tagged `kimi-code-sanyalnet-cli-vX.Y.Z`.
+**➡ [Download the latest fork release](https://github.com/tuklusan/kimi-code/releases/latest)** — native binaries for linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win32-x64 / win32-arm64, tagged `kimi-code-sanyalnet-cli-vX.Y.Z`. The features described in this README ship in **rev 0.0.3 and later**; older releases carry only the earlier subset.
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/ci.yml?branch=main&label=CI)](https://github.com/tuklusan/kimi-code/actions/workflows/ci.yml) [![Smoke](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/sanyalnet-smoke.yml?branch=main&label=Company%20smoke%20%C3%97%206%20platforms)](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml) [![Release](https://img.shields.io/github/v/release/tuklusan/kimi-code?label=fork%20release&color=blue)](https://github.com/tuklusan/kimi-code/releases/latest)
 
@@ -61,7 +61,7 @@ On first run the installer prompts (once, silently) for your NVIDIA NIM API key 
 
 ## Multi-platform test results
 
-Every push to `main` runs a smoke test that deploys the software-development company via [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) into a sandboxed `KIMI_CODE_HOME` on each of the six release runners, then asserts that every persona and directive file landed, the seeded `config.toml` carries the `REPLACE_ME` placeholder (never a real API key), the installer is idempotent, and the fork's `KIMI_INITIAL_PROMPT_FILE` autoload wiring is still present in the built source. No LLM calls — this is a fast, deterministic wiring check that runs in about a minute on all six runners in parallel.
+Every push to `main` that touches `sanyalnet-lab/`, the smoke workflow itself, or the fork's autoload source files runs a smoke test that deploys the software-development company via [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) into a sandboxed `KIMI_CODE_HOME` on each of the six release runners, then asserts that every persona and directive file landed, the seeded `config.toml` carries the `REPLACE_ME` placeholder (never a real API key), the installer is idempotent, and the fork's `KIMI_INITIAL_PROMPT_FILE` autoload wiring is still present in the built source. No LLM calls — this is a fast, deterministic wiring check that runs in about a minute on all six runners in parallel.
 
 | Runner | OS image | Company install | Runtime |
 |---|---|---|---|

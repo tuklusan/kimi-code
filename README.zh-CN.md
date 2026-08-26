@@ -4,7 +4,7 @@
 
 一个经过调优的 Kimi Code CLI 构建版，开箱即用地提供一个预配置的六角色 AI **软件开发公司** —— 灵感来自 [ChatDev](https://github.com/OpenBMB/ChatDev)。六个专业子代理（CEO、CPO、CTO、程序员、评审员、测试员）通过五阶段 SDLC 流水线协作，把自然语言产品需求变成经过评审和测试的可运行代码。
 
-**➡ [下载最新分支发行版](https://github.com/tuklusan/kimi-code/releases/latest)** —— 覆盖 linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win32-x64 / win32-arm64 的原生二进制，标签为 `kimi-code-sanyalnet-cli-vX.Y.Z`。
+**➡ [下载最新分支发行版](https://github.com/tuklusan/kimi-code/releases/latest)** —— 覆盖 linux-x64 / linux-arm64 / darwin-x64 / darwin-arm64 / win32-x64 / win32-arm64 的原生二进制，标签为 `kimi-code-sanyalnet-cli-vX.Y.Z`。本 README 描述的功能自 **rev 0.0.3 起**才具备；更早的发行版只包含更小的子集。
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/ci.yml?branch=main&label=CI)](https://github.com/tuklusan/kimi-code/actions/workflows/ci.yml) [![Smoke](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/sanyalnet-smoke.yml?branch=main&label=Company%20smoke%20%C3%97%206%20platforms)](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml) [![Release](https://img.shields.io/github/v/release/tuklusan/kimi-code?label=fork%20release&color=blue)](https://github.com/tuklusan/kimi-code/releases/latest)
 
@@ -61,7 +61,7 @@ cd kimi-code/sanyalnet-lab
 
 ## 多平台测试结果
 
-每次向 `main` 推送都会运行一个冒烟测试：通过 [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) 把软件开发公司部署到六台发行 runner 的沙箱 `KIMI_CODE_HOME`，然后断言每个角色文件和指令都到位、种子 `config.toml` 携带 `REPLACE_ME` 占位符（永远不是真 key）、安装脚本幂等、并且分支的 `KIMI_INITIAL_PROMPT_FILE` 自动加载布线仍存在于构建源码中。不调用 LLM —— 这是一个快速、确定性的布线检查，六台 runner 并行大约一分钟完成。
+每次向 `main` 推送、且触及 `sanyalnet-lab/`、冒烟工作流本身或分支自动加载源码时，都会通过 [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) 把软件开发公司部署到六台发行 runner 的沙箱 `KIMI_CODE_HOME`，然后断言每个角色文件和指令都到位、种子 `config.toml` 携带 `REPLACE_ME` 占位符（永远不是真 key）、安装脚本幂等、并且分支的 `KIMI_INITIAL_PROMPT_FILE` 自动加载布线仍存在于构建源码中。不调用 LLM —— 这是一个快速、确定性的布线检查，六台 runner 并行大约一分钟完成。
 
 | Runner | OS 镜像 | 公司安装 | 用时 |
 |---|---|---|---|
