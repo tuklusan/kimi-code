@@ -221,6 +221,13 @@ export interface KimiTUIStartupInput {
   readonly migrateOnly?: boolean;
   /** agent-core-v2 engine; enables the startup workspace-trust prompt. */
   readonly engineV2?: boolean;
+  /**
+   * When set, the editor is pre-populated with this text on fresh sessions
+   * (never on --continue / --session resumes). The user can review and edit
+   * before pressing Enter to submit. Sourced from KIMI_INITIAL_PROMPT_FILE
+   * in the fork's downstream config; see docs/en/configuration/env-vars.md.
+   */
+  readonly initialPromptText?: string;
 }
 
 type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';
@@ -342,6 +349,7 @@ export class KimiTUI {
   /** Whether the harness runs on the agent-core-v2 engine (lazy session creation). */
   readonly engineV2: boolean;
   private startupNotice: string | undefined;
+  private readonly initialPromptText: string | undefined;
   private lastActivityMode: string | undefined;
   private currentLoadingTip: { kind: LoadingTipKind; tip: string | undefined } | undefined =
     undefined;
@@ -432,6 +440,7 @@ export class KimiTUI {
     this.migrateOnly = startupInput.migrateOnly ?? false;
     this.engineV2 = startupInput.engineV2 ?? false;
     this.startupNotice = startupInput.startupNotice;
+    this.initialPromptText = startupInput.initialPromptText;
     this.state = createTUIState(tuiOptions);
     this.uninstallRainbowDance = installRainbowDance(() => {
       this.state.ui.requestRender();
@@ -723,6 +732,19 @@ export class KimiTUI {
     this.state.editorContainer.clear();
     this.state.editorContainer.addChild(this.state.editor);
     this.state.ui.setFocus(this.state.editor);
+    // Downstream-fork behavior: KIMI_INITIAL_PROMPT_FILE pre-populates the
+    // editor with an initial prompt on fresh sessions only. Never overwrite
+    // on resume — the user's typed-but-unsent text and history are the
+    // authority there. A non-empty text guard also avoids clobbering the
+    // editor if a follow-up TUI feature had already put text in it.
+    if (
+      !shouldReplayHistory &&
+      this.initialPromptText !== undefined &&
+      this.state.editor.getText().length === 0
+    ) {
+      this.state.editor.setText(this.initialPromptText);
+      this.updateEditorBorderHighlight(this.initialPromptText);
+    }
     return shouldReplayHistory;
   }
 

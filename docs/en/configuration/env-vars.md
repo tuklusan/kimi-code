@@ -222,6 +222,14 @@ Stdio MCP servers that run as Node child processes honor `HTTP_PROXY` / `HTTPS_P
 
 - `KIMI_OUTBOUND_MIN_INTERVAL_MS` — minimum spacing, in milliseconds, between successive model-driven outbound network calls made by the `fetch_url` and `web_search` tools. The gate is shared across both tools, so a runaway loop that alternates between them still respects the interval. Default `1000` (one second). Set to `0` to disable. Model API calls (LLM inference) and non-tool traffic are **not** throttled by this variable.
 
+## Initial prompt autoload (downstream fork only)
+
+> Applies to the `tuklusan/kimi-code` downstream fork; not present in upstream.
+
+- `KIMI_INITIAL_PROMPT_FILE` — absolute path to a UTF-8 text file. When set, the TUI editor is pre-populated with the file's contents on every **fresh** session start (never on `--continue` or `--session <id>` resumes). The user can review and edit the text before pressing Enter to submit. Unset, empty, or unreadable → no prefill. Designed so recurring multi-agent primers (e.g. an SDLC "software company" directive) don't require clipboard shuffling on every launch.
+
+  Example: `export KIMI_INITIAL_PROMPT_FILE="$HOME/.kimi-code/SDLC-Multi-Agent-Project-Directive.md"`
+
 ## Next steps
 
 - [Config overrides](./overrides.md) — how environment variables, CLI options, and the config file interact by priority

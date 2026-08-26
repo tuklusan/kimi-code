@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -118,6 +119,7 @@ export async function runShell(
   // Resolve --agent/--agent-file once for the startup session; validateOptions
   // has already rejected them alongside --session/--continue.
   const agentProfile = await resolveAgentProfileSelection(opts, workDir);
+  const initialPromptText = await readInitialPromptFile(process.env);
   const tui = new KimiTUI(harness, {
     cliOptions: opts,
     agentProfile,
@@ -129,6 +131,7 @@ export async function runShell(
     migrationPlan,
     migrateOnly: runOptions.migrateOnly,
     engineV2,
+    initialPromptText,
   });
 
   initializeCliTelemetry({
@@ -278,5 +281,34 @@ export async function runShell(
     await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS });
     await harness.close();
     throw error;
+  }
+}
+
+/**
+ * Downstream-fork behavior. When KIMI_INITIAL_PROMPT_FILE is set to a
+ * readable file path, the editor is pre-populated with its contents on
+ * the first fresh session so a "software company" (or any recurring
+ * primer) is one Enter-key away — no clipboard shuffling on every launch.
+ *
+ * Empty path, missing file, or a read error all resolve to `undefined`
+ * so the TUI falls back to an empty editor. The failure is silent by
+ * design: this is a convenience knob, not something whose absence should
+ * fail startup.
+ *
+ * Session resumes (`--continue` / `--session`) never see the prefill —
+ * the guard for that lives in `KimiTUI.initMainTui`. This function only
+ * resolves the text to inject; the guard resolves whether to inject.
+ */
+async function readInitialPromptFile(
+  env: NodeJS.ProcessEnv,
+): Promise<string | undefined> {
+  const path = env['KIMI_INITIAL_PROMPT_FILE']?.trim();
+  if (path === undefined || path.length === 0) return undefined;
+  try {
+    const contents = await readFile(path, 'utf8');
+    const trimmed = contents.replace(/\s+$/u, '');
+    return trimmed.length > 0 ? trimmed : undefined;
+  } catch {
+    return undefined;
   }
 }
