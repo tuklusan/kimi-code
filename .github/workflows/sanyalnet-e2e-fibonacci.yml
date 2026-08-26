@@ -29,6 +29,23 @@ permissions:
 jobs:
   gate:
     runs-on: ubuntu-latest
+    outputs:
+      have_key: ${{ steps.check.outputs.have_key }}
     steps:
-      - name: Placeholder
-        run: echo "workflow parses with inputs"
+      - id: check
+        env:
+          KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "have_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have_key=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NVIDIA_API_KEY not set; e2e is a no-op."
+          fi
+
+  run:
+    needs: gate
+    if: needs.gate.outputs.have_key == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "would run pipeline here"
