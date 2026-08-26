@@ -1,0 +1,132 @@
+name: Sanyalnet Company Smoke Test
+
+# Deploys the SANYALnet Labs Kimi Code CLI Software Development Company on
+# every supported runner. Verifies the installer runs cleanly, files land
+# in the expected places, and the fork's KIMI_INITIAL_PROMPT_FILE feature
+# is present in the built kimi bundle. Does NOT call any LLM — this is a
+# fast, deterministic install/wiring check that runs on every push.
+#
+# For the end-to-end "company delivers functional software" test that
+# actually spawns subagents against a real model, see the
+# `sanyalnet-e2e-fibonacci.yml` workflow (manual dispatch, requires the
+# NVIDIA_API_KEY secret).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sanyalnet-lab/**'
+      - '.github/workflows/sanyalnet-smoke.yml'
+      - 'apps/kimi-code/src/cli/run-shell.ts'
+      - 'apps/kimi-code/src/tui/kimi-tui.ts'
+  pull_request:
+    paths:
+      - 'sanyalnet-lab/**'
+      - '.github/workflows/sanyalnet-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Company install (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x64
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+          - os: macos-15-intel
+            target: darwin-x64
+          - os: macos-15
+            target: darwin-arm64
+          - os: windows-2025-vs2026
+            target: win32-x64
+          - os: windows-11-arm
+            target: win32-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run installer into a sandbox KIMI_CODE_HOME
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+        run: |
+          set -euo pipefail
+          mkdir -p "$KIMI_CODE_HOME"
+          # First-run seeds config.toml from the template. Feed an empty
+          # key to the interactive `read -srp` prompt so the installer
+          # writes the template verbatim (with REPLACE_ME) — the smoke
+          # test doesn't need a real API key.
+          bash sanyalnet-lab/bin/install.sh <<< ""
+          echo "---installed tree---"
+          ls -la "$KIMI_CODE_HOME"
+          echo "---agents/---"
+          ls -la "$KIMI_CODE_HOME/agents"
+
+      - name: Assert every expected file landed
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in ceo.md cpo.md cto.md programmer.md reviewer.md tester.md; do
+            path="$KIMI_CODE_HOME/agents/$name"
+            if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+              echo "MISSING: $path" >&2
+              missing=$((missing+1))
+            fi
+          done
+          for path in "$KIMI_CODE_HOME/SDLC-Multi-Agent-Project-Directive.md" "$KIMI_CODE_HOME/config.toml"; do
+            if [ ! -e "$path" ] && [ ! -L "$path" ]; then
+              echo "MISSING: $path" >&2
+              missing=$((missing+1))
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "$missing expected files missing" >&2
+            exit 1
+          fi
+          echo "all 8 expected files present"
+
+      - name: Assert config.toml is not carrying a live API key
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+        run: |
+          set -euo pipefail
+          # First-run with an empty key writes the template verbatim, so
+          # the placeholder must still be there (never a real nvapi- key).
+          if grep -q 'nvapi-[A-Za-z0-9_-]\{10,\}' "$KIMI_CODE_HOME/config.toml"; then
+            echo "config.toml contains what looks like a live NVIDIA key — the installer must never bake secrets from the template" >&2
+            exit 1
+          fi
+          grep -q 'REPLACE_ME' "$KIMI_CODE_HOME/config.toml"
+
+      - name: Idempotence — re-running the installer must not fail or duplicate
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+        run: |
+          set -euo pipefail
+          bash sanyalnet-lab/bin/install.sh
+          # config.toml already exists, so installer leaves it alone
+          # (see install.sh: `if [ ! -f "$DEST/config.toml" ]`).
+
+      - name: Assert the fork's initial-prompt autoload wiring is in the source
+        shell: bash
+        run: |
+          set -euo pipefail
+          # We can't run kimi here (no binary built), but we can assert
+          # the source it will be built from contains the feature. This
+          # is a light backstop against a merge dropping it silently.
+          grep -q 'KIMI_INITIAL_PROMPT_FILE' apps/kimi-code/src/cli/run-shell.ts
+          grep -q 'initialPromptText' apps/kimi-code/src/tui/kimi-tui.ts
+          grep -q 'KIMI_INITIAL_PROMPT_FILE' docs/en/configuration/env-vars.md

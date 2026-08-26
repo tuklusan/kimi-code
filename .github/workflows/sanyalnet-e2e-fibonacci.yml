@@ -1,0 +1,271 @@
+name: Sanyalnet Company E2E (Fibonacci)
+
+# End-to-end acceptance test for the SANYALnet Labs Kimi Code CLI Software
+# Development Company. Deploys the company on every supported runner,
+# gives it a Fibonacci requirement, waits for the five-phase SDLC pipeline
+# to finish, and asserts the artefacts (a working program that prints the
+# first 20 Fibonacci numbers, plus a docs file) are on disk.
+#
+# COST/TIME NOTICE. This workflow spends real LLM tokens through NVIDIA
+# NIM. Each runner drives roughly 20–30 model turns (CEO → CPO → CTO →
+# programmer → reviewer → tester) and takes 15–30 wall-clock minutes.
+# It runs only on manual dispatch, and it early-exits with a green "no-op"
+# outcome when the NVIDIA_API_KEY secret is not set — so the workflow is
+# safe to enable in a fork that hasn't yet paid for a key.
+#
+# The company's non-determinism means a green outcome on one run does not
+# guarantee a green outcome on the next. Retry once before concluding
+# something is broken.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runners:
+        description: 'Which runners? "one" (linux-x64 only, cheapest) | "unix" (linux + macos) | "all" (all 6)'
+        required: true
+        type: choice
+        default: 'one'
+        options:
+          - one
+          - unix
+          - all
+      model:
+        description: 'Model alias from sanyalnet-lab/config.toml.template to run the pipeline on'
+        required: true
+        type: string
+        default: 'nvidia/nvidia/llama-3.3-nemotron-super-49b-v1'
+      timeout_minutes:
+        description: 'Per-runner timeout (minutes)'
+        required: true
+        type: number
+        default: 30
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sanyalnet-e2e-${{ github.event.inputs.runners }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Check NVIDIA_API_KEY presence
+    runs-on: ubuntu-latest
+    outputs:
+      have_key: ${{ steps.check.outputs.have_key }}
+    steps:
+      - id: check
+        env:
+          KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "have_key=true" >> "$GITHUB_OUTPUT"
+            echo "NVIDIA_API_KEY secret is set. Proceeding."
+          else
+            echo "have_key=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NVIDIA_API_KEY secret is not set. Skipping E2E; workflow ends green as a no-op."
+          fi
+
+  run:
+    name: Company E2E (${{ matrix.target }})
+    needs: gate
+    if: needs.gate.outputs.have_key == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x64
+            runner_group: one
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+            runner_group: unix
+          - os: macos-15-intel
+            target: darwin-x64
+            runner_group: unix
+          - os: macos-15
+            target: darwin-arm64
+            runner_group: unix
+          - os: windows-2025-vs2026
+            target: win32-x64
+            runner_group: all
+          - os: windows-11-arm
+            target: win32-arm64
+            runner_group: all
+
+    steps:
+      - name: Skip when not in the requested runner group
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          req='${{ github.event.inputs.runners }}'
+          group='${{ matrix.runner_group }}'
+          run=false
+          case "$req" in
+            one)  [ "$group" = "one" ] && run=true ;;
+            unix) [ "$group" = "one" ] || [ "$group" = "unix" ] && run=true ;;
+            all)  run=true ;;
+          esac
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          if [ "$run" != "true" ]; then
+            echo "Runner group '$group' is not in the requested set '$req'; skipping."
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        if: steps.gate.outputs.run == 'true'
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install workspace deps
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build kimi bundle
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm run build
+
+      - name: Deploy the company into a sandbox KIMI_CODE_HOME
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+          NVAPI: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$KIMI_CODE_HOME"
+          bash sanyalnet-lab/bin/install.sh <<< "$NVAPI"
+          # Override the default model to whatever the operator picked at
+          # dispatch time; the template's default may be unavailable or
+          # slower than needed for a Fibonacci ask.
+          sed -i.bak "s|^default_model *=.*|default_model = \"${{ github.event.inputs.model }}\"|" "$KIMI_CODE_HOME/config.toml" || \
+            sed -i '' "s|^default_model *=.*|default_model = \"${{ github.event.inputs.model }}\"|" "$KIMI_CODE_HOME/config.toml"
+          rm -f "$KIMI_CODE_HOME/config.toml.bak"
+
+      - name: Compose the product-requirement prompt
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+        run: |
+          set -euo pipefail
+          out_dir="${{ runner.temp }}/company-workspace"
+          mkdir -p "$out_dir"
+          {
+            cat "$KIMI_CODE_HOME/SDLC-Multi-Agent-Project-Directive.md"
+            echo
+            echo "---"
+            echo
+            echo "## Product requirement"
+            echo
+            echo "Build a small application in the easiest language available on this box that prints the first 20 numbers of the Fibonacci sequence, one per line, starting with 0 and 1. The application must:"
+            echo
+            echo "1. Live in the current working directory as a single source file. Do NOT create nested project directories."
+            echo "2. Run to completion in under 5 seconds on this runner with no external dependencies beyond the standard runtime for the chosen language."
+            echo "3. Ship with a companion \`README.md\` in the same directory that documents (a) the language / runtime chosen, (b) the exact command to run the program, and (c) the expected output."
+            echo "4. Produce exactly 20 lines of output; the first line MUST be \"0\" and the second line MUST be \"1\"."
+            echo
+            echo "Begin Phase 1 immediately. Do NOT ask clarifying questions."
+          } > "$out_dir/company-prompt.md"
+          echo "prompt bytes: $(wc -c < "$out_dir/company-prompt.md")"
+
+      - name: Run the company (headless, single-shot)
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        env:
+          KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+        run: |
+          set -euo pipefail
+          out_dir="${{ runner.temp }}/company-workspace"
+          prompt="$(cat "$out_dir/company-prompt.md")"
+          cd "$out_dir"
+          # `kimi --prompt` is the headless single-shot invocation; the
+          # process exits when the model's final turn settles. The 5-phase
+          # pipeline runs inside that single invocation as subagent
+          # spawns.
+          node "$GITHUB_WORKSPACE/apps/kimi-code/dist/main.mjs" --prompt "$prompt" --yolo \
+            || { echo "::warning::kimi exited non-zero — checking artefacts anyway"; }
+          echo "---workspace after company run---"
+          ls -la "$out_dir"
+
+      - name: Assert deliverables landed and behave
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          out_dir="${{ runner.temp }}/company-workspace"
+          cd "$out_dir"
+          if [ ! -f README.md ]; then
+            echo "FAIL: no README.md — the tester should have refused to sign off without docs" >&2
+            exit 1
+          fi
+          src="$(ls -1 fib.* fibonacci.* main.* app.* *.py *.js *.sh 2>/dev/null | grep -viE 'README|prompt' | head -1 || true)"
+          if [ -z "$src" ]; then
+            echo "FAIL: could not locate the program source file among:" >&2
+            ls -1 >&2
+            exit 1
+          fi
+          echo "detected source: $src"
+          case "$src" in
+            *.py) run="python3 $src" ;;
+            *.js) run="node $src" ;;
+            *.sh) run="bash $src" ;;
+            *)    echo "FAIL: unknown language for $src"; exit 1 ;;
+          esac
+          echo "running: $run"
+          output="$($run 2>&1)"
+          echo "---output---"
+          echo "$output"
+          echo "---"
+          line_count="$(printf '%s\n' "$output" | wc -l)"
+          if [ "$line_count" -ne 20 ]; then
+            echo "FAIL: expected 20 lines of output, got $line_count" >&2
+            exit 1
+          fi
+          expected='0
+1
+1
+2
+3
+5
+8
+13
+21
+34
+55
+89
+144
+233
+377
+610
+987
+1597
+2584
+4181'
+          if [ "$output" != "$expected" ]; then
+            echo "FAIL: output does not match the first 20 Fibonacci numbers" >&2
+            diff <(echo "$output") <(echo "$expected") || true
+            exit 1
+          fi
+          echo "PASS: the company delivered a functional Fibonacci program + docs"
+
+      - name: Upload company artefacts
+        if: always() && steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: sanyalnet-e2e-${{ matrix.target }}
+          path: ${{ runner.temp }}/company-workspace
+          retention-days: 14
+          if-no-files-found: warn

@@ -1,11 +1,32 @@
-# sanyalnet-lab — SDLC multi-agent company snapshot
+# SANYALnet Labs Kimi Code CLI Software Development Company
 
 > **Personal downstream fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) with local tweaks. Not intended for upstream merge.**
 
-Version-controlled copy of the SANYALnet Labs kimi setup — a six-role
-software-development lifecycle (SDLC) "company" that runs entirely inside
-kimi as parallel subagents. Committed here so the setup is backed up,
-diffable, and reproducible on any lab box.
+Inspired by [ChatDev](https://github.com/OpenBMB/ChatDev). Version-controlled
+copy of the SANYALnet Labs kimi setup — a six-role software development
+lifecycle (SDLC) "company" that runs entirely inside kimi as bindable
+subagents. Committed here so the setup is backed up, diffable, and
+reproducible on any lab box.
+
+## How it works
+
+1. A fresh kimi session loads the primer in `SDLC-Multi-Agent-Project-Directive.md`
+   (via the fork's `KIMI_INITIAL_PROMPT_FILE` autoload) and treats the six
+   persona files under `agents/` as bindable subagents.
+2. You submit a natural-language product requirement (e.g. "print the first
+   20 Fibonacci numbers"). The CEO reads the primer and drives the five
+   phases in order:
+   1. **Inception & Status Audit** — `ceo` + `cpo` synthesise a PRD.
+   2. **Architectural Blueprint** — `cto` picks the tech stack and signs
+      off the design.
+   3. **Implementation** — `programmer` writes the source incrementally.
+   4. **Static Review** — `reviewer` audits the diff, loops with the
+      programmer until zero critical defects remain.
+   5. **QA** — `tester` designs and runs unit / integration / edge-case
+      tests, then issues a Certificate of Compliance.
+3. Each phase's output is the next phase's input; subagents run in
+   isolated contexts and hand back structured results, so the main
+   session transcript stays legible.
 
 ## Contents
 
