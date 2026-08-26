@@ -1,41 +1,24 @@
-name: Sanyalnet Company E2E (Fibonacci)
-
-# End-to-end acceptance test for the SANYALnet Labs Kimi Code CLI Software
-# Development Company. Deploys the company on every supported runner,
-# gives it a Fibonacci requirement, waits for the five-phase SDLC pipeline
-# to finish, and asserts the artefacts (a working program that prints the
-# first 20 Fibonacci numbers, plus a docs file) are on disk.
-#
-# COST/TIME NOTICE. This workflow spends real LLM tokens through NVIDIA
-# NIM. Each runner drives roughly 20–30 model turns (CEO → CPO → CTO →
-# programmer → reviewer → tester) and takes 15–30 wall-clock minutes.
-# It runs only on manual dispatch, and it early-exits with a green "no-op"
-# outcome when the NVIDIA_API_KEY secret is not set — so the workflow is
-# safe to enable in a fork that hasn't yet paid for a key.
-#
-# The company's non-determinism means a green outcome on one run does not
-# guarantee a green outcome on the next. Retry once before concluding
-# something is broken.
+name: Sanyalnet Company E2E Fibonacci
 
 on:
   workflow_dispatch:
     inputs:
       runners:
-        description: 'Which runners? "one" (linux-x64 only, cheapest) | "unix" (linux + macos) | "all" (all 6)'
+        description: 'Which runners? one | unix | all'
         required: true
         type: choice
-        default: 'one'
+        default: one
         options:
           - one
           - unix
           - all
       model:
-        description: 'Model alias from sanyalnet-lab/config.toml.template to run the pipeline on'
+        description: 'Model alias to run the pipeline on'
         required: true
         type: string
-        default: 'nvidia/nvidia/llama-3.3-nemotron-super-49b-v1'
+        default: nvidia/nvidia/llama-3.3-nemotron-super-49b-v1
       timeout_minutes:
-        description: 'Per-runner timeout (minutes)'
+        description: 'Per-runner timeout in minutes (bash timeout around kimi)'
         required: true
         type: string
         default: '30'
@@ -67,14 +50,10 @@ jobs:
           fi
 
   run:
-    name: Company E2E (${{ matrix.target }})
+    name: Company E2E ${{ matrix.target }}
     needs: gate
     if: needs.gate.outputs.have_key == 'true'
     runs-on: ${{ matrix.os }}
-    # Hard ceiling; the operator's dispatch-time `timeout_minutes` input is
-    # enforced as a bash `timeout` around the kimi invocation instead,
-    # because a job-level expression that reads a workflow_dispatch input
-    # fails the on-push YAML validation pass.
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -103,19 +82,26 @@ jobs:
       - name: Skip when not in the requested runner group
         id: gate
         shell: bash
+        env:
+          REQ: ${{ github.event.inputs.runners }}
+          GROUP: ${{ matrix.runner_group }}
         run: |
           set -euo pipefail
-          req='${{ github.event.inputs.runners }}'
-          group='${{ matrix.runner_group }}'
           run=false
-          case "$req" in
-            one)  [ "$group" = "one" ] && run=true ;;
-            unix) [ "$group" = "one" ] || [ "$group" = "unix" ] && run=true ;;
-            all)  run=true ;;
+          case "$REQ" in
+            one)
+              [ "$GROUP" = "one" ] && run=true
+              ;;
+            unix)
+              if [ "$GROUP" = "one" ] || [ "$GROUP" = "unix" ]; then run=true; fi
+              ;;
+            all)
+              run=true
+              ;;
           esac
           echo "run=$run" >> "$GITHUB_OUTPUT"
           if [ "$run" != "true" ]; then
-            echo "Runner group '$group' is not in the requested set '$req'; skipping."
+            echo "Runner group $GROUP is not in the requested set $REQ; skipping."
           fi
 
       - name: Checkout
@@ -147,16 +133,16 @@ jobs:
         env:
           KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
           NVAPI: ${{ secrets.NVIDIA_API_KEY }}
+          MODEL: ${{ github.event.inputs.model }}
         run: |
           set -euo pipefail
           mkdir -p "$KIMI_CODE_HOME"
           bash sanyalnet-lab/bin/install.sh <<< "$NVAPI"
-          # Override the default model to whatever the operator picked at
-          # dispatch time; the template's default may be unavailable or
-          # slower than needed for a Fibonacci ask.
-          sed -i.bak "s|^default_model *=.*|default_model = \"${{ github.event.inputs.model }}\"|" "$KIMI_CODE_HOME/config.toml" || \
-            sed -i '' "s|^default_model *=.*|default_model = \"${{ github.event.inputs.model }}\"|" "$KIMI_CODE_HOME/config.toml"
-          rm -f "$KIMI_CODE_HOME/config.toml.bak"
+          if sed --version >/dev/null 2>&1; then
+            sed -i "s|^default_model *=.*|default_model = \"$MODEL\"|" "$KIMI_CODE_HOME/config.toml"
+          else
+            sed -i '' "s|^default_model *=.*|default_model = \"$MODEL\"|" "$KIMI_CODE_HOME/config.toml"
+          fi
 
       - name: Compose the product-requirement prompt
         if: steps.gate.outputs.run == 'true'
@@ -178,14 +164,14 @@ jobs:
             echo
             echo "1. Live in the current working directory as a single source file. Do NOT create nested project directories."
             echo "2. Run to completion in under 5 seconds on this runner with no external dependencies beyond the standard runtime for the chosen language."
-            echo "3. Ship with a companion \`README.md\` in the same directory that documents (a) the language / runtime chosen, (b) the exact command to run the program, and (c) the expected output."
-            echo "4. Produce exactly 20 lines of output; the first line MUST be \"0\" and the second line MUST be \"1\"."
+            echo "3. Ship with a companion README.md in the same directory that documents (a) the language / runtime chosen, (b) the exact command to run the program, and (c) the expected output."
+            echo "4. Produce exactly 20 lines of output; the first line MUST be 0 and the second line MUST be 1."
             echo
             echo "Begin Phase 1 immediately. Do NOT ask clarifying questions."
           } > "$out_dir/company-prompt.md"
           echo "prompt bytes: $(wc -c < "$out_dir/company-prompt.md")"
 
-      - name: Run the company (headless, single-shot)
+      - name: Run the company (headless single-shot)
         if: steps.gate.outputs.run == 'true'
         shell: bash
         env:
@@ -196,15 +182,9 @@ jobs:
           out_dir="${{ runner.temp }}/company-workspace"
           prompt="$(cat "$out_dir/company-prompt.md")"
           cd "$out_dir"
-          # Operator-supplied timeout, defaulted to 30 min at the shell
-          # layer (workflow_dispatch inputs must not surface at job-level
-          # expressions or the on-push YAML validation fails).
           t="${TIMEOUT_MIN:-30}"
-          # `kimi --prompt` is the headless single-shot invocation; the
-          # process exits when the model's final turn settles. The 5-phase
-          # pipeline runs inside that single invocation as subagent spawns.
           timeout "${t}m" node "$GITHUB_WORKSPACE/apps/kimi-code/dist/main.mjs" --prompt "$prompt" --yolo \
-            || { echo "::warning::kimi exited non-zero or was killed by timeout — checking artefacts anyway"; }
+            || echo "::warning::kimi exited non-zero or was killed by timeout; checking artefacts anyway"
           echo "---workspace after company run---"
           ls -la "$out_dir"
 
@@ -216,7 +196,7 @@ jobs:
           out_dir="${{ runner.temp }}/company-workspace"
           cd "$out_dir"
           if [ ! -f README.md ]; then
-            echo "FAIL: no README.md — the tester should have refused to sign off without docs" >&2
+            echo "FAIL: no README.md" >&2
             exit 1
           fi
           src="$(ls -1 fib.* fibonacci.* main.* app.* *.py *.js *.sh 2>/dev/null | grep -viE 'README|prompt' | head -1 || true)"
@@ -227,13 +207,13 @@ jobs:
           fi
           echo "detected source: $src"
           case "$src" in
-            *.py) run="python3 $src" ;;
-            *.js) run="node $src" ;;
-            *.sh) run="bash $src" ;;
-            *)    echo "FAIL: unknown language for $src"; exit 1 ;;
+            *.py) run_cmd="python3 $src" ;;
+            *.js) run_cmd="node $src" ;;
+            *.sh) run_cmd="bash $src" ;;
+            *) echo "FAIL: unknown language for $src"; exit 1 ;;
           esac
-          echo "running: $run"
-          output="$($run 2>&1)"
+          echo "running: $run_cmd"
+          output="$($run_cmd 2>&1)"
           echo "---output---"
           echo "$output"
           echo "---"
@@ -267,7 +247,7 @@ jobs:
             diff <(echo "$output") <(echo "$expected") || true
             exit 1
           fi
-          echo "PASS: the company delivered a functional Fibonacci program + docs"
+          echo "PASS: the company delivered a functional Fibonacci program plus docs"
 
       - name: Upload company artefacts
         if: always() && steps.gate.outputs.run == 'true'
