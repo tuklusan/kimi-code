@@ -12,6 +12,14 @@
 
 ## 实际运行截图
 
+<video src="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4" poster="docs/media/linux-x64-company-active.png" controls muted playsinline width="900">
+  您的浏览器不支持 HTML5 视频。
+  <a href="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4">下载 MP4 演示（54 MB）</a>
+  或查看下方静态截图。
+</video>
+
+▶ 如果内嵌播放器无法加载，请[直接下载 MP4](https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4)。
+
 ![SANYALnet Labs 软件开发公司在 Linux x64 上运行，六个子代理全部活跃——CEO 正在召开内部全员会议修复回归问题，explore / CTO / programmer / reviewer 已完成，tester 正在跑验证套件。模型为经 NVIDIA NIM 的 Nemotron 3 Super 120B。](docs/media/linux-x64-company-active.png)
 
 SANYALnet 实验机上的一次真实会话，运行中，对象是 `snakes-and-ladders` 工作区。操作员上报了一个严重回归（"棋子不移动、梯子长得像梯子、蛇的样子不对"），要求 CEO 召开内部全员会议。从上到下阅读代理树：

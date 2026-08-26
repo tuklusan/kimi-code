@@ -12,6 +12,21 @@ For the underlying Kimi Code CLI product — install script, quickstart, editor/
 
 ## The company in action
 
+<!--
+  Live demo. `<video>` is HTML-rendered by GitHub in Markdown; poster
+  falls back to the PNG below when the browser or reader is offline /
+  video is blocked. The MP4 is a release asset (kept out of the git
+  tree — 54 MB compresses poorly and belongs in release storage, not
+  repo history).
+-->
+<video src="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4" poster="docs/media/linux-x64-company-active.png" controls muted playsinline width="900">
+  Your browser can't play HTML5 video.
+  <a href="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4">Download the demo (MP4, 54 MB)</a>
+  or see the still frame below.
+</video>
+
+▶ [Watch the raw MP4](https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4) if the inline player doesn't load.
+
 ![SANYALnet Labs software development company running on Linux x64 with all six subagents active — CEO holding an internal all-hands to fix regressions, explore / CTO / programmer / reviewer completed, tester running the verification suite. Nemotron 3 Super 120B via NVIDIA NIM.](docs/media/linux-x64-company-active.png)
 
 A real session on the SANYALnet lab box, mid-run against a `snakes-and-ladders` workspace. The operator has escalated a bad-regression report ("pieces not moving, ladders shaped like ladders, snakes look wrong") and asked the CEO to hold an internal all-hands. Reading the agent tree top to bottom:

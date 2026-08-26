@@ -43,3 +43,11 @@ handover.md
 *-mockup.html
 *-demo.html
 *-demos.html
+
+# Video captures of the SANYALnet company in action — kept out of git
+# history (large binary; poor compression). Attach demo MP4/WEBM/MOV
+# files to the corresponding release instead, and reference them from
+# the README via the release download URL.
+docs/media/*.mp4
+docs/media/*.webm
+docs/media/*.mov
