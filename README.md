@@ -10,6 +10,23 @@ A tuned build of the Kimi Code CLI that ships a preconfigured six-role AI **soft
 
 For the underlying Kimi Code CLI product — install script, quickstart, editor/IDE integration (ACP), `/mcp-config`, video input, hooks, marketplace plugins, general command reference — see the [upstream README](https://github.com/MoonshotAI/kimi-code#readme) and [upstream docs](https://moonshotai.github.io/kimi-code/en/). This README covers only what the fork adds on top.
 
+## The company in action
+
+![SANYALnet Labs software development company running on Linux x64 with all six subagents active — CEO holding an internal all-hands to fix regressions, explore / CTO / programmer / reviewer completed, tester running the verification suite. Nemotron 3 Super 120B via NVIDIA NIM.](docs/media/linux-x64-company-active.png)
+
+A real session on the SANYALnet lab box, mid-run against a `snakes-and-ladders` workspace. The operator has escalated a bad-regression report ("pieces not moving, ladders shaped like ladders, snakes look wrong") and asked the CEO to hold an internal all-hands. Reading the agent tree top to bottom:
+
+- **`ceo`** — 62m 17s in, 25.8k tokens, using the Agent tool to spawn the tester's verification suite — driving the all-hands.
+- **`explore`** — completed in 2m 8s, 35.3k tokens — audited `gameView.js` for the rendering issue.
+- **`cto`** — completed in 2m 59s, 51.3k tokens — confirmed the architecture.
+- **`programmer`** — completed in 9m 46s, 77.5k tokens across 26 tool calls — applied the rendering + movement fixes.
+- **`reviewer`** — completed in 2m 21s, 44.3k tokens — audited the diff.
+- **`tester`** — still running at 43m 44s, 105k tokens, 153 tool calls, executing `node verify_tests.js` — signing off the verification suite before the CEO closes the all-hands.
+
+Context: 25.4k of the model's 977k window (3%). All six agents pinned to the same Nemotron 3 Super 120B on NVIDIA NIM with high thinking effort — no proxy in front (the fork's `send_prompt_cache_key = false` option retires the pre-fork NIM proxy workaround), all six roles active in one session.
+
+Captures for the other five platforms (linux-arm64, darwin-x64, darwin-arm64, win32-x64, win32-arm64) will land here as they're taken.
+
 ## How the software company works
 
 On any fresh session, kimi loads the primer at `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md` (via the fork's [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) autoload) and treats the six persona files under `~/.kimi-code/agents/` as bindable subagents. When you press Enter on the pre-loaded directive, the CEO and CPO run **Phase 1 automatically** — they read the current project folder, synthesise a **Project Status Briefing**, then **HALT and wait for your instructions**. Phases 2 through 5 are defined but gated: they never begin without an explicit operator directive naming which phase to enter and what goal to pursue.

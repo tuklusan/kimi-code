@@ -8,6 +8,18 @@ lifecycle (SDLC) "company" that runs entirely inside kimi as bindable
 subagents. Committed here so the setup is backed up, diffable, and
 reproducible on any lab box.
 
+## The company in action
+
+![Six subagents active on Linux x64 — CEO holding an internal all-hands to fix regressions, explore / CTO / programmer / reviewer completed, tester running the verification suite. Nemotron 3 Super 120B via NVIDIA NIM.](../docs/media/linux-x64-company-active.png)
+
+A real lab-box session mid-run against a `snakes-and-ladders` workspace. The
+CEO is 62m in, driving an internal all-hands to close a bad-regression report
+("pieces not moving, ladders shaped like ladders, snakes look wrong"). Four
+subagents (explore, cto, programmer, reviewer) have already checkpointed
+their phases and closed out; the tester has been running `node verify_tests.js`
+for 43m across 153 tool calls and is about to sign off. All six agents on the
+same Nemotron 3 Super 120B model via NVIDIA NIM, no proxy, in one session.
+
 ## How it works
 
 1. A fresh kimi session loads the primer in `SDLC-Multi-Agent-Project-Directive.md`

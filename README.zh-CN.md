@@ -10,6 +10,23 @@
 
 关于底层 Kimi Code CLI 产品 —— 安装脚本、快速上手、编辑器/IDE 集成（ACP）、`/mcp-config`、视频输入、hooks、插件市场、通用命令参考 —— 请参见 [上游 README](https://github.com/MoonshotAI/kimi-code#readme) 和 [上游文档](https://moonshotai.github.io/kimi-code/zh/)。本 README 只介绍本分支在其之上新增的部分。
 
+## 实际运行截图
+
+![SANYALnet Labs 软件开发公司在 Linux x64 上运行，六个子代理全部活跃——CEO 正在召开内部全员会议修复回归问题，explore / CTO / programmer / reviewer 已完成，tester 正在跑验证套件。模型为经 NVIDIA NIM 的 Nemotron 3 Super 120B。](docs/media/linux-x64-company-active.png)
+
+SANYALnet 实验机上的一次真实会话，运行中，对象是 `snakes-and-ladders` 工作区。操作员上报了一个严重回归（"棋子不移动、梯子长得像梯子、蛇的样子不对"），要求 CEO 召开内部全员会议。从上到下阅读代理树：
+
+- **`ceo`** —— 已运行 62 分 17 秒，25.8k tokens，正在使用 Agent 工具触发 tester 的验证套件 —— 主持全员会议。
+- **`explore`** —— 2 分 8 秒完成，35.3k tokens —— 审查了 `gameView.js` 的渲染问题。
+- **`cto`** —— 2 分 59 秒完成，51.3k tokens —— 确认了架构。
+- **`programmer`** —— 9 分 46 秒完成，77.5k tokens，26 次工具调用 —— 应用了渲染 + 移动的修复。
+- **`reviewer`** —— 2 分 21 秒完成，44.3k tokens —— 审计了变更。
+- **`tester`** —— 已运行 43 分 44 秒，105k tokens，153 次工具调用，正在执行 `node verify_tests.js` —— 在 CEO 结束会议前完成验证套件的签字。
+
+上下文占用：模型 977k 上下文窗口中已用 25.4k（3%）。六个代理都固定在同一个 NVIDIA NIM 的 Nemotron 3 Super 120B 上，thinking effort 为 high —— 前面没有代理（本分支的 `send_prompt_cache_key = false` 选项已退休了分支之前的 NIM 代理变通方案），六个角色在同一个会话里全部活跃。
+
+其余五个平台（linux-arm64、darwin-x64、darwin-arm64、win32-x64、win32-arm64）的截图将随拍随传。
+
 ## 软件公司的工作原理
 
 任何全新会话启动时，kimi 都会通过本分支的 [`KIMI_INITIAL_PROMPT_FILE`](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only) 自动加载 `~/.kimi-code/SDLC-Multi-Agent-Project-Directive.md`，并把 `~/.kimi-code/agents/` 下的六个角色文件当作可绑定子代理。当你在预加载的指令上按回车后，CEO 与 CPO **自动执行第 1 阶段** —— 阅读当前项目文件夹、综合出一份 **项目状态简报**，然后 **暂停等待你的指示**。第 2 到第 5 阶段有定义但受控：没有你明确指出进入哪个阶段、追求什么目标，它们绝不启动。
