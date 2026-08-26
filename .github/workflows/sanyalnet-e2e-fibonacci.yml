@@ -37,8 +37,8 @@ on:
       timeout_minutes:
         description: 'Per-runner timeout (minutes)'
         required: true
-        type: number
-        default: 30
+        type: string
+        default: '30'
 
 permissions:
   contents: read
