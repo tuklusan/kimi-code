@@ -44,7 +44,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sanyalnet-e2e-${{ github.event.inputs.runners }}
+  group: sanyalnet-e2e-${{ github.event.inputs.runners || 'default' }}
   cancel-in-progress: false
 
 jobs:
@@ -71,7 +71,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.have_key == 'true'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes) }}
+    timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes || '30') }}
     strategy:
       fail-fast: false
       matrix:
