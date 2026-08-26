@@ -222,6 +222,14 @@ Stdio MCP servers that run as Node child processes honor `HTTP_PROXY` / `HTTPS_P
 
 - `KIMI_OUTBOUND_MIN_INTERVAL_MS` — minimum spacing, in milliseconds, between successive model-driven outbound network calls made by the `fetch_url` and `web_search` tools. The gate is shared across both tools, so a runaway loop that alternates between them still respects the interval. Default `1000` (one second). Set to `0` to disable. Model API calls (LLM inference) and non-tool traffic are **not** throttled by this variable.
 
+## Auto-update opt-in (downstream fork only)
+
+> Applies to the `tuklusan/kimi-code` downstream fork; not present in upstream.
+
+- `KIMI_CODE_AUTO_UPDATE` — opt back in to the upstream auto-update flow. In upstream builds, kimi runs an update preflight on every launch (check → prompt → background install → staged swap); this fork ships its own release binaries and disables the whole preflight **by default** to prevent the upstream update channel from silently replacing the fork's binary. Set to `1` / `true` / `yes` / `on` to restore the upstream preflight for the current process. The upstream disable switches (`KIMI_CODE_NO_AUTO_UPDATE` and the legacy `KIMI_CLI_NO_AUTO_UPDATE`) still short-circuit the flow off; on a conflict the opt-out wins.
+
+  Example: `export KIMI_CODE_AUTO_UPDATE=1`
+
 ## Initial prompt autoload (downstream fork only)
 
 > Applies to the `tuklusan/kimi-code` downstream fork; not present in upstream.
