@@ -44,7 +44,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: sanyalnet-e2e-${{ github.event.inputs.runners || 'default' }}
+  group: sanyalnet-e2e
   cancel-in-progress: false
 
 jobs:
@@ -71,7 +71,11 @@ jobs:
     needs: gate
     if: needs.gate.outputs.have_key == 'true'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ fromJSON(github.event.inputs.timeout_minutes || '30') }}
+    # Hard ceiling; the operator's dispatch-time `timeout_minutes` input is
+    # enforced as a bash `timeout` around the kimi invocation instead,
+    # because a job-level expression that reads a workflow_dispatch input
+    # fails the on-push YAML validation pass.
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -186,17 +190,21 @@ jobs:
         shell: bash
         env:
           KIMI_CODE_HOME: ${{ runner.temp }}/kimi-home
+          TIMEOUT_MIN: ${{ github.event.inputs.timeout_minutes }}
         run: |
           set -euo pipefail
           out_dir="${{ runner.temp }}/company-workspace"
           prompt="$(cat "$out_dir/company-prompt.md")"
           cd "$out_dir"
+          # Operator-supplied timeout, defaulted to 30 min at the shell
+          # layer (workflow_dispatch inputs must not surface at job-level
+          # expressions or the on-push YAML validation fails).
+          t="${TIMEOUT_MIN:-30}"
           # `kimi --prompt` is the headless single-shot invocation; the
           # process exits when the model's final turn settles. The 5-phase
-          # pipeline runs inside that single invocation as subagent
-          # spawns.
-          node "$GITHUB_WORKSPACE/apps/kimi-code/dist/main.mjs" --prompt "$prompt" --yolo \
-            || { echo "::warning::kimi exited non-zero — checking artefacts anyway"; }
+          # pipeline runs inside that single invocation as subagent spawns.
+          timeout "${t}m" node "$GITHUB_WORKSPACE/apps/kimi-code/dist/main.mjs" --prompt "$prompt" --yolo \
+            || { echo "::warning::kimi exited non-zero or was killed by timeout — checking artefacts anyway"; }
           echo "---workspace after company run---"
           ls -la "$out_dir"
 
