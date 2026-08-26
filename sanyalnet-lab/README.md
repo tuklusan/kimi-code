@@ -28,6 +28,25 @@ reproducible on any lab box.
    isolated contexts and hand back structured results, so the main
    session transcript stays legible.
 
+## Multi-platform verification
+
+The install path is verified on every push to the fork's `main` by
+[`.github/workflows/sanyalnet-smoke.yml`](../.github/workflows/sanyalnet-smoke.yml)
+across all six release runners
+(linux-x64, linux-arm64, darwin-x64, darwin-arm64, win32-x64, win32-arm64).
+Each runner deploys the company via `bin/install.sh`, then asserts that
+every persona and directive file landed, the seeded `config.toml`
+placeholder is intact (no leaked keys), the installer is idempotent, and
+the fork's `KIMI_INITIAL_PROMPT_FILE` autoload wiring is present in the
+built source. No LLM calls; ~1 min end-to-end.
+
+The end-to-end "company delivers functional software" acceptance test is
+[`.github/workflows/sanyalnet-e2e-fibonacci.yml`](../.github/workflows/sanyalnet-e2e-fibonacci.yml)
+— manual dispatch, needs an `NVIDIA_API_KEY` repo secret. It deploys the
+company, feeds it a Fibonacci requirement, runs kimi headless, and
+executes the generated program to check its output exactly matches the
+first 20 Fibonacci numbers.
+
 ## Contents
 
 | Path | Purpose |

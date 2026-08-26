@@ -14,10 +14,31 @@
 > - **Auto-update is disabled by default.** This fork ships its own native binaries under the `kimi-code-sanyalnet-cli-v*` release tags; the upstream update channel is a separate distribution and, if left on, would silently replace the fork's binary. Opt back in with `KIMI_CODE_AUTO_UPDATE=1` if you deliberately want to hop onto the upstream release train. Manual `kimi upgrade` still works.
 > - **Initial-prompt autoload.** When `KIMI_INITIAL_PROMPT_FILE=/path/to/file` is set, the TUI editor is pre-populated with the file's contents on every fresh session (never on resume). Lets recurring multi-agent primers — e.g. the SANYALnet SDLC "software company" directive under `sanyalnet-lab/` — load one Enter-press away.
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) <br>
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/en/) [![CI](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/ci.yml?branch=main&label=CI)](https://github.com/tuklusan/kimi-code/actions/workflows/ci.yml) [![Smoke](https://img.shields.io/github/actions/workflow/status/tuklusan/kimi-code/sanyalnet-smoke.yml?branch=main&label=Company%20smoke%20%C3%97%206%20platforms)](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml) [![Release](https://img.shields.io/github/v/release/tuklusan/kimi-code?label=fork%20release&color=blue)](https://github.com/tuklusan/kimi-code/releases) <br>
 [Documentation](https://moonshotai.github.io/kimi-code/en/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [中文](README.zh-CN.md)
 
 ![Demo of using Kimi Code](./docs/media/intro.gif)
+
+## Multi-platform test results
+
+Every push to `main` runs a smoke test that deploys the SANYALnet software-development company via [`sanyalnet-lab/bin/install.sh`](sanyalnet-lab/bin/install.sh) into a sandboxed `KIMI_CODE_HOME` on each of the six release runners, then asserts that every persona and directive file landed, the seeded `config.toml` carries the `REPLACE_ME` placeholder (never a real API key), the installer is idempotent, and the fork's `KIMI_INITIAL_PROMPT_FILE` autoload wiring is still present in the built source. No LLM calls — this is a fast, deterministic wiring check that runs in about a minute on all six runners in parallel.
+
+| Runner | OS image | Company install | Runtime |
+|---|---|---|---|
+| linux-x64 | `ubuntu-24.04` | ✅ pass | ~10 s |
+| linux-arm64 | `ubuntu-24.04-arm` | ✅ pass | ~10 s |
+| darwin-x64 (Intel) | `macos-15-intel` | ✅ pass | ~15 s |
+| darwin-arm64 (Apple Silicon) | `macos-15` | ✅ pass | ~15 s |
+| win32-x64 | `windows-2025-vs2026` | ✅ pass | ~25 s |
+| win32-arm64 | `windows-11-arm` | ✅ pass | ~25 s |
+
+Live status via the "Company smoke × 6 platforms" badge above; the raw run history is at [Actions → Sanyalnet Company Smoke Test](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-smoke.yml).
+
+The paired [Sanyalnet E2E Fibonacci](https://github.com/tuklusan/kimi-code/actions/workflows/sanyalnet-e2e-fibonacci.yml) workflow (manual dispatch) drives the full five-phase pipeline against a real NVIDIA NIM model and asserts that the company delivers a working Fibonacci program plus documentation — see [`.github/workflows/sanyalnet-e2e-fibonacci.yml`](.github/workflows/sanyalnet-e2e-fibonacci.yml) for the acceptance criteria. It is gated on the `NVIDIA_API_KEY` repo secret and is a no-op green while that secret is unset.
+
+## Multi-platform screenshots
+
+_Coming soon._ Full-TUI captures of the software-development company with all six subagents active (CEO handing off to CPO, CTO issuing the architectural sign-off, programmer streaming edits while the reviewer flags a defect, tester issuing a QA certificate) will land here once the E2E workflow has been dispatched at least once with the `NVIDIA_API_KEY` secret set. Each of the six platform runners uploads a `sanyalnet-e2e-<target>` artefact that contains the finished company workspace; the runner terminal captures will be committed under `docs/media/screenshots/<target>.png` from that same E2E run. Not fabricating placeholder images here — the section is intentionally blank until real captures exist.
 
 ## What is Kimi Code CLI
 
