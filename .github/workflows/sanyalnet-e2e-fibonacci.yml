@@ -2,6 +2,26 @@ name: Sanyalnet E2E Fibonacci
 
 on:
   workflow_dispatch:
+    inputs:
+      runners:
+        description: 'Which runners? one | unix | all'
+        required: true
+        type: choice
+        default: one
+        options:
+          - one
+          - unix
+          - all
+      model:
+        description: 'Model alias to run the pipeline on'
+        required: true
+        type: string
+        default: nvidia/nvidia/llama-3.3-nemotron-super-49b-v1
+      timeout_minutes:
+        description: 'Per-runner timeout in minutes'
+        required: true
+        type: string
+        default: '30'
 
 permissions:
   contents: read
@@ -11,4 +31,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Placeholder
-        run: echo "workflow parses"
+        run: echo "workflow parses with inputs"
