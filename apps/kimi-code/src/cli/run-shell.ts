@@ -285,15 +285,25 @@ export async function runShell(
 }
 
 /**
- * Downstream-fork behavior. When KIMI_INITIAL_PROMPT_FILE is set to a
- * readable file path, the editor is pre-populated with its contents on
- * the first fresh session so a "software company" (or any recurring
- * primer) is one Enter-key away — no clipboard shuffling on every launch.
+ * Downstream-fork behavior. Resolves the "initial prompt" file that
+ * pre-populates the TUI editor on the first fresh session — the
+ * primer that lets a recurring multi-agent setup (like the SANYALnet
+ * SDLC software company) load one Enter-key away, without clipboard
+ * shuffling on every launch.
  *
- * Empty path, missing file, or a read error all resolve to `undefined`
- * so the TUI falls back to an empty editor. The failure is silent by
- * design: this is a convenience knob, not something whose absence should
- * fail startup.
+ * Resolution order (first hit wins):
+ *   1. `KIMI_INITIAL_PROMPT_FILE` env var — explicit path, wins over
+ *      everything. Empty / whitespace value means "unset".
+ *   2. `$KIMI_CODE_HOME/initial-prompt.md` — filesystem convention,
+ *      picked up automatically the moment the file exists. `install.sh`
+ *      creates it as a symlink to the SDLC directive so no shell state
+ *      needs to propagate for autoload to fire.
+ *   3. `$HOME/.kimi-code/initial-prompt.md` — same convention with the
+ *      default `KIMI_CODE_HOME` resolved from `HOME`.
+ *
+ * Missing files, unreadable files, and empty content all resolve to
+ * `undefined`; the TUI falls back to an empty editor. Failure is silent
+ * by design — this is a convenience knob, not a hard requirement.
  *
  * Session resumes (`--continue` / `--session`) never see the prefill —
  * the guard for that lives in `KimiTUI.initMainTui`. This function only
@@ -302,13 +312,25 @@ export async function runShell(
 async function readInitialPromptFile(
   env: NodeJS.ProcessEnv,
 ): Promise<string | undefined> {
-  const path = env['KIMI_INITIAL_PROMPT_FILE']?.trim();
-  if (path === undefined || path.length === 0) return undefined;
-  try {
-    const contents = await readFile(path, 'utf8');
-    const trimmed = contents.replace(/\s+$/u, '');
-    return trimmed.length > 0 ? trimmed : undefined;
-  } catch {
-    return undefined;
+  const candidates: string[] = [];
+  const envPath = env['KIMI_INITIAL_PROMPT_FILE']?.trim();
+  if (envPath !== undefined && envPath.length > 0) candidates.push(envPath);
+  const brandHome = env['KIMI_CODE_HOME']?.trim();
+  if (brandHome !== undefined && brandHome.length > 0) {
+    candidates.push(join(brandHome, 'initial-prompt.md'));
   }
+  const home = env['HOME'] ?? homedir();
+  if (home !== undefined && home.length > 0) {
+    candidates.push(join(home, '.kimi-code', 'initial-prompt.md'));
+  }
+  for (const path of candidates) {
+    try {
+      const contents = await readFile(path, 'utf8');
+      const trimmed = contents.replace(/\s+$/u, '');
+      if (trimmed.length > 0) return trimmed;
+    } catch {
+      // try the next candidate
+    }
+  }
+  return undefined;
 }

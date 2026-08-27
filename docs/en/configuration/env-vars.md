@@ -234,9 +234,16 @@ Stdio MCP servers that run as Node child processes honor `HTTP_PROXY` / `HTTPS_P
 
 > Applies to the `tuklusan/kimi-code` downstream fork; not present in upstream.
 
-- `KIMI_INITIAL_PROMPT_FILE` — absolute path to a UTF-8 text file. When set, the TUI editor is pre-populated with the file's contents on every **fresh** session start (never on `--continue` or `--session <id>` resumes). The user can review and edit the text before pressing Enter to submit. Unset, empty, or unreadable → no prefill. Designed so recurring multi-agent primers (e.g. an SDLC "software company" directive) don't require clipboard shuffling on every launch.
+- `KIMI_INITIAL_PROMPT_FILE` — absolute path to a UTF-8 text file. When set, the TUI editor is pre-populated with the file's contents on every **fresh** session start (never on `--continue` or `--session <id>` resumes). The user can review and edit the text before pressing Enter to submit. Designed so recurring multi-agent primers (e.g. an SDLC "software company" directive) don't require clipboard shuffling on every launch.
 
-  Example: `export KIMI_INITIAL_PROMPT_FILE="$HOME/.kimi-code/SDLC-Multi-Agent-Project-Directive.md"`
+  **Resolution order** (first hit wins; unset / empty / unreadable / empty-after-trim → no prefill):
+
+  1. `KIMI_INITIAL_PROMPT_FILE` env var.
+  2. `$KIMI_CODE_HOME/initial-prompt.md` (falls back to `~/.kimi-code/initial-prompt.md` when `KIMI_CODE_HOME` is unset).
+
+  The second step is a **filesystem-driven autoload** — the moment a file exists at that canonical path, the next kimi launch picks it up. No env var to set, no shell to restart, no config edit. `sanyalnet-lab/bin/install.sh` creates it as a symlink pointing at the SDLC directive, so an installed SANYALnet Labs Software Development Company setup autoloads out of the box.
+
+  Example: `export KIMI_INITIAL_PROMPT_FILE="$HOME/prompts/my-primer.md"` (explicit override), or just `ln -sfn /path/to/your.md ~/.kimi-code/initial-prompt.md` (filesystem convention).
 
 ## Next steps
 

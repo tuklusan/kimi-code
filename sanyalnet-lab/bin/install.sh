@@ -43,6 +43,14 @@ done
 # The SDLC directive lives at the same location kimi originally kept it.
 ln -sfn "$LAB_DIR/SDLC-Multi-Agent-Project-Directive.md" "$DEST/"
 
+# Filesystem-fallback autoload. The fork's `readInitialPromptFile` in
+# apps/kimi-code/src/cli/run-shell.ts picks up any file at
+# `$KIMI_CODE_HOME/initial-prompt.md` automatically — no env var, no
+# shell restart. Symlinking the SDLC directive here means the next
+# `kimi` launch on this box loads the company directive out of the box.
+# Overrideable at any time: `ln -sfn /path/to/your.md "$DEST/initial-prompt.md"`.
+ln -sfn "$LAB_DIR/SDLC-Multi-Agent-Project-Directive.md" "$DEST/initial-prompt.md"
+
 # Seed config.toml on first install. Never overwrite an existing file — the
 # lab box carries live provider keys and per-model overrides beyond the
 # template.

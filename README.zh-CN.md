@@ -78,7 +78,7 @@ cd kimi-code/sanyalnet-lab
 ## 本分支在上游之上新增的内容
 
 - **`sanyalnet-lab/`** —— 六个代理角色 + 五阶段 SDLC 指令 + 一个幂等安装脚本，把整个软件开发公司部署到任意 Linux / macOS / Windows 机器。参见 [`sanyalnet-lab/README.md`](sanyalnet-lab/README.md)。
-- **`KIMI_INITIAL_PROMPT_FILE`** —— 环境变量，在每次全新会话（永不在恢复时）预填 TUI 编辑器。让循环使用的多代理引导词只差一次回车。文档：[env-vars.md](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only)。
+- **初始提示自动加载** —— 每次全新会话（永不在恢复时）预填 TUI 编辑器，按顺序查找：(1) `KIMI_INITIAL_PROMPT_FILE` 环境变量；(2) 规范化文件路径 `$KIMI_CODE_HOME/initial-prompt.md`。第二条是"文件系统自动加载"—— 只要该文件存在，下一次 kimi 启动就会自动加载它，不需要环境变量，也不需要重开 shell。`sanyalnet-lab/bin/install.sh` 把它建成指向 SDLC 指令的符号链接，因此已安装的公司配置开箱即可自动加载。文档：[env-vars.md](docs/en/configuration/env-vars.md#initial-prompt-autoload-downstream-fork-only)。
 - **按 provider 的 `send_prompt_cache_key` 开关** —— 针对严格校验请求体的 OpenAI 兼容网关（NVIDIA NIM、部分 vLLM 部署）—— 它们会用 HTTP 400 拒绝未知参数。已知严格端点在 `provider catalog add` 时自动关闭；可通过 `kimi provider set <id> --send-prompt-cache-key <true|false>` 或手工编辑 `config.toml` 覆盖。取代了分支之前的 `nim_proxy.py` 变通方案（保留在 [`sanyalnet-lab/legacy/`](sanyalnet-lab/legacy/) 作为存档）。
 - **`KIMI_OUTBOUND_MIN_INTERVAL_MS`** —— 模型驱动的对外网络调用（`fetch_url`、`web_search`）之间最小 1 秒的间隔。两个工具共用同一节流器，跨工具的失控循环也会被限速。默认 `1000`；设为 `0` 关闭。
 - **自动更新默认关闭** —— 本分支通过 `kimi-code-sanyalnet-cli-v*` 标签发布自己的原生二进制；上游更新通道是独立发行渠道，若不关闭会静默把分支二进制替换为上游版本。用 `KIMI_CODE_AUTO_UPDATE=1` 显式打开。手动 `kimi upgrade` 仍然可用。

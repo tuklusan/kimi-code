@@ -109,17 +109,27 @@ Refresh after a git pull by re-running `./bin/install.sh`.
 
 ## How the autoload works
 
-The fork adds a `KIMI_INITIAL_PROMPT_FILE` environment variable. When set,
-kimi injects the file's contents as the first user turn on every new
-session (guarded so resume doesn't re-inject). Set it manually:
+The fork's kimi looks for an initial-prompt file at launch, in this order:
+
+1. **`KIMI_INITIAL_PROMPT_FILE` env var** — an explicit override; wins over
+   everything.
+2. **`$KIMI_CODE_HOME/initial-prompt.md`** — a filesystem-driven default;
+   the moment this file exists, the next kimi launch picks it up.
+   No env var, no shell restart, no config edit.
+
+`install.sh` creates the second path as a symlink pointing at
+`SDLC-Multi-Agent-Project-Directive.md`, so the company directive
+autoloads on every fresh session by default. To swap in a different
+primer without touching the env var:
 
 ```sh
-export KIMI_INITIAL_PROMPT_FILE="$HOME/.kimi-code/SDLC-Multi-Agent-Project-Directive.md"
-kimi     # first turn is the directive; the CEO+CPO subagents launch Phase 1 immediately
+ln -sfn /path/to/your-prompt.md ~/.kimi-code/initial-prompt.md
 ```
 
-Or persist it via `install.sh --autoload` which appends the export to
-`~/.bashrc`.
+The optional `install.sh --autoload` flag additionally exports the env
+var into `~/.bashrc` (belt-and-suspenders — useful if you want the
+export visible for shell inspection, or if you're launching kimi with a
+different `KIMI_CODE_HOME`).
 
 ## Model choices
 
