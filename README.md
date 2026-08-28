@@ -19,13 +19,13 @@ For the underlying Kimi Code CLI product — install script, quickstart, editor/
   tree — 54 MB compresses poorly and belongs in release storage, not
   repo history).
 -->
-<video src="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4" poster="docs/media/linux-x64-company-active.png" controls muted playsinline width="900">
+<video src="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v1.0.0/sanyalnet-company-1.0.0.mp4" poster="docs/media/linux-x64-company-active.png" controls muted playsinline width="900">
   Your browser can't play HTML5 video.
-  <a href="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4">Download the demo (MP4, 54 MB)</a>
+  <a href="https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v1.0.0/sanyalnet-company-1.0.0.mp4">Download the demo (MP4, 20 MB)</a>
   or see the still frame below.
 </video>
 
-▶ [Watch the raw MP4](https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4) if the inline player doesn't load.
+▶ [Watch the raw MP4 (rev 1.0.0)](https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v1.0.0/sanyalnet-company-1.0.0.mp4) if the inline player doesn't load. Earlier demo at rev 0.0.3 kept as a [historical artefact](https://github.com/tuklusan/kimi-code/releases/download/kimi-code-sanyalnet-cli-v0.0.3/snake-ladders-kimi-1.mp4).
 
 ![SANYALnet Labs software development company running on Linux x64 with all six subagents active — CEO holding an internal all-hands to fix regressions, explore / CTO / programmer / reviewer completed, tester running the verification suite. Nemotron 3 Super 120B via NVIDIA NIM.](docs/media/linux-x64-company-active.png)
 
