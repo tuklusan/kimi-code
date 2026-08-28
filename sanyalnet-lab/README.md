@@ -142,9 +142,12 @@ The template pins these providers and the initial default model:
   Nemotron-3 Nano 30B (thinking), Llama 3.1 Nemotron Nano 8B, Nemotron
   Nano 12B v2 VL (multimodal), Llama 3.1 Nemotron 70B Instruct, plus
   voicechat, content-safety, and PII-detection specialists.
-- **`default_model`** in the template points at a Nemotron 120B alias the
-  lab was tuning against — swap for whichever alias you want the CEO
-  subagent to start on.
+- **`default_model`** in the template points at **Nemotron 3 Ultra 550B
+  A55B** — the sweet spot for the software-development company in lab
+  benchmarking (1M-token context window, thinking + tool_use, noticeably
+  better multi-agent orchestration than the Super 120B and Nano tiers).
+  Swap for a smaller alias if you want cheaper inference or your NIM
+  entitlement doesn't cover the Ultra.
 
 ## What this snapshot does NOT include
 

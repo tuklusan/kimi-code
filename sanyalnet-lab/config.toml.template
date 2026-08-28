@@ -1,4 +1,4 @@
-default_model = "nvidia/nvidia/nemotron-3-super-120b-a12b"
+default_model = "nvidia/nvidia/nemotron-3-ultra-550b-a55b"
 
 [providers.nvidia]
 base_url = "https://integrate.api.nvidia.com/v1"

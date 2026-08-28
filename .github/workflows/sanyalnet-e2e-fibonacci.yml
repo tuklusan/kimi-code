@@ -16,7 +16,7 @@ on:
         description: 'Model alias to run the pipeline on'
         required: true
         type: string
-        default: nvidia/nvidia/llama-3.3-nemotron-super-49b-v1
+        default: nvidia/nvidia/nemotron-3-ultra-550b-a55b
       timeout_minutes:
         description: 'Per-runner timeout in minutes'
         required: true
