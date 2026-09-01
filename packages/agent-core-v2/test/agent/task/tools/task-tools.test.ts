@@ -766,7 +766,7 @@ describe('WaitForTool', () => {
     expect(WaitForInputSchema.safeParse({}).success).toBe(false);
     expect(WaitForInputSchema.safeParse({ timeout: 0 }).success).toBe(false);
     expect(WaitForInputSchema.safeParse({ timeout: -5 }).success).toBe(false);
-    expect(WaitForInputSchema.safeParse({ timeout: 601 }).success).toBe(false);
+    expect(WaitForInputSchema.safeParse({ timeout: 7 * 24 * 60 * 60 + 1 }).success).toBe(false);
     expect(WaitForInputSchema.safeParse({ timeout: 1.5 }).success).toBe(false);
     expect(tool.parameters).toMatchObject({
       type: 'object',
