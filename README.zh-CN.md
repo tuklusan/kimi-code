@@ -85,7 +85,7 @@ cd kimi-code/sanyalnet-lab
 - **下游发行工作流** —— [`.github/workflows/sanyalnet-release.yml`](.github/workflows/sanyalnet-release.yml) 发布带标签的 `kimi-code-sanyalnet-cli-vX.Y.Z` 版本，包含六平台 SEA 二进制，不需要 macOS 签名。
 - **公司代码评审工作流** —— [`sanyalnet-lab/review-workflows/`](sanyalnet-lab/review-workflows/) 提供语言中立、带裁决机制的评审流程，由完整的软件公司对当前代码库运行。已随分支发布两个：[`deepseek-v4-pro-software-company-review-workflow-v31-draft.md`](sanyalnet-lab/review-workflows/deepseek-v4-pro-software-company-review-workflow-v31-draft.md)（面向 DeepSeek V4 Pro，需要 `DEEPSEEK_API_KEY`）和 [`nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md`](sanyalnet-lab/review-workflows/nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md)（面向 Nemotron 3 Ultra 550B A55B，需要 `NVIDIA_API_KEY_CODING`）。`install.sh` 会把两者软链到 `$KIMI_CODE_HOME`，任何 kimi 会话只需一次 `cat` + 粘贴即可调用。
 - **模型 404 视为可重试** —— 一些模型网关在端点预热或自动扩缩时会短暂返回 HTTP 404（尤其是 NVIDIA NIM 目录端点在 Nemotron 自动扩缩期间）。上游把 404 当作确定性错误快速失败；本分支把 404 归为与 429 同类的可重试，一次自动扩缩抖动不再让整个公司流水线中止。
-- **`WaitFor` 工具等待上限提升到 7 天** —— 上游把 `WaitFor` 后台任务等待器的上限设为 bash 后台默认值（10 分钟），使得长时间运行的验证 / QA / 评审任务在等待中被提前踢出，迫使调用方进入轮询循环。本分支把上限设为几乎无限的 7 天，让多小时的 SDLC 运行可以直接等待。
+- **`WaitFor` 工具等待上限** —— 本分支评估过把这个上限从上游默认的 10 分钟提高，让长时间运行的验证 / QA / 评审任务能在一次等待中完成，但工具的 zod schema `.max()` 与 `.describe()` 内的常量都会被内联进工具 JSON 并进入 LLM 系统提示；任何数值调整都会让压缩（compaction）提示的 tokenization 偏移约 1 个 token，足以让上游多个对 token 数敏感的测试报错。为此本分支保留上游的 10 分钟上限。工具自身的描述已经告诉调用方"超时不是错误：该工具返回仍在运行的任务列表，你可以再次调用以继续等待" —— 长时间等待就是以 10 分钟为步长的轮询循环。
 
 ## 多平台测试结果
 
