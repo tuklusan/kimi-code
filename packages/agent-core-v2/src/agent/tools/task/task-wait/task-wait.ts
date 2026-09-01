@@ -2,9 +2,8 @@ import { z } from 'zod';
 
 import { createDecorator } from '#/_base/di/instantiation';
 import { type AgentTool } from '#/tool/toolContract';
-import { DEFAULT_BACKGROUND_TIMEOUT_S } from '#/agent/tools/os/bash/bash';
 
-export const WAIT_FOR_MAX_TIMEOUT_S = DEFAULT_BACKGROUND_TIMEOUT_S;
+export const WAIT_FOR_MAX_TIMEOUT_S = 999;
 
 export const WaitForInputSchema = z.object({
   timeout: z
