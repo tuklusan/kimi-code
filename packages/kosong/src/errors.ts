@@ -227,10 +227,16 @@ export function isRetryableGenerateError(error: unknown): boolean {
     if (error instanceof APIProviderQuotaExhaustedError) {
       return false;
     }
-    // Transient statuses worth retrying: 408 (request timeout), 409
-    // (lock/conflict timeout), 429 (rate limit), 5xx (server errors) and 529
-    // (provider overloaded — the "engine is currently overloaded" case).
-    return [408, 409, 429, 500, 502, 503, 504, 529].includes(error.statusCode);
+    // Transient statuses worth retrying: 404 (fork-only — some model
+    // gateways return 404 transiently for endpoints that dynamically
+    // come online / go offline, notably NVIDIA NIM catalog endpoints
+    // during model warm-up and Nemotron 3 Ultra 550B A55B autoscaling
+    // events; upstream treated 404 as deterministic, this fork treats
+    // it in the same retryable class as 429), 408 (request timeout),
+    // 409 (lock/conflict timeout), 429 (rate limit), 5xx (server
+    // errors) and 529 (provider overloaded — the "engine is currently
+    // overloaded" case).
+    return [404, 408, 409, 429, 500, 502, 503, 504, 529].includes(error.statusCode);
   }
   // Fallback safety net: an unclassified provider failure — typically an
   // upstream gateway that forwards the original error only as text, with no
@@ -238,9 +244,9 @@ export function isRetryableGenerateError(error: unknown): boolean {
   // message) — lands here as a base `ChatProviderError`. Retrying beats
   // failing the run on the first transient blip. Typed `APIStatusError`
   // instances are deliberately excluded above: deterministic 4xx
-  // (400/401/403/404/422) and the recovery-owned context-overflow /
-  // request-too-large subclasses keep their dedicated handling instead of
-  // burning retries first. Image-format rejections are likewise excluded:
+  // (400/401/403/422 — 404 is treated as retryable, see above) and the
+  // recovery-owned context-overflow / request-too-large subclasses keep
+  // their dedicated handling instead of burning retries first. Image-format rejections are likewise excluded:
   // they are deterministic per history and recovered by the media-stripped
   // resend (see isImageFormatError), so retrying the identical request first
   // would only burn the retry budget.

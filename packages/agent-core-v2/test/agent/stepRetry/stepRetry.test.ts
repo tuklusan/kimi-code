@@ -298,7 +298,7 @@ describe('stepRetry plugin', () => {
       llmGenerateServices(async () => {
         calls += 1;
         if (calls === 1) throw new APIStatusError(400, 'endpoint broken');
-        if (calls === 2) throw new APIStatusError(404, 'model not found');
+        if (calls === 2) throw new APIStatusError(403, 'forbidden');
         if (calls === 3) throw new APIStatusError(429, 'slow down');
         return {
           id: 'infinite-retry-response',

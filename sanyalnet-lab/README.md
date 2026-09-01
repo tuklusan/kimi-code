@@ -57,6 +57,32 @@ briefing, and only then decide what work is worth spending LLM tokens
 on. Nothing gets refactored, deleted, or written without your explicit
 approval.
 
+## Company review workflows
+
+Language-neutral, adjudicated review harnesses the full software-development
+company runs against the current codebase. Each names its target model,
+required credential env var, and — in the file itself — the exact steps
+each role (CEO, CTO, Programmer, Reviewer, Tester) takes and the pass /
+adjudication criteria. They live in [`review-workflows/`](review-workflows/)
+here and are symlinked by `install.sh` into `$KIMI_CODE_HOME` so any kimi
+session can `cat` them into its editor.
+
+| Workflow | Target model | Credential env var |
+|---|---|---|
+| [`deepseek-v4-pro-software-company-review-workflow-v31-draft.md`](review-workflows/deepseek-v4-pro-software-company-review-workflow-v31-draft.md) | DeepSeek V4 Pro | `DEEPSEEK_API_KEY` |
+| [`nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md`](review-workflows/nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md) | NVIDIA NIM Nemotron 3 Ultra 550B A55B | `NVIDIA_API_KEY_CODING` |
+
+To invoke one, from a kimi session in the project you want reviewed:
+
+```
+cat ~/.kimi-code/nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md
+```
+
+Then paste the workflow into the editor (or reference it via the
+initial-prompt convention) and press Enter. The CEO reads the workflow,
+dispatches the CTO / Programmer / Reviewer / Tester through the review
+pipeline, and issues an adjudicated verdict at the end.
+
 ## Multi-platform verification
 
 The install path is verified on every push to the fork's `main` by

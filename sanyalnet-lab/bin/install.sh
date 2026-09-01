@@ -51,6 +51,18 @@ ln -sfn "$LAB_DIR/SDLC-Multi-Agent-Project-Directive.md" "$DEST/"
 # Overrideable at any time: `ln -sfn /path/to/your.md "$DEST/initial-prompt.md"`.
 ln -sfn "$LAB_DIR/SDLC-Multi-Agent-Project-Directive.md" "$DEST/initial-prompt.md"
 
+# Review workflows — on-disk primers that the operator pastes into a
+# kimi session when they want the company to run a comprehensive code
+# review of the current project against a specific model. They live at
+# the same $KIMI_CODE_HOME path they were prototyped at, so any prior
+# muscle memory of `cat ~/.kimi-code/<name>.md | ...` still works.
+# Both files are language-neutral; the DeepSeek one needs DEEPSEEK_API_KEY
+# and the NVIDIA one needs NVIDIA_API_KEY_CODING to be reachable by kimi.
+for src in "$LAB_DIR"/review-workflows/*.md; do
+  [ -e "$src" ] || continue
+  ln -sfn "$src" "$DEST/$(basename "$src")"
+done
+
 # Seed config.toml on first install. Never overwrite an existing file — the
 # lab box carries live provider keys and per-model overrides beyond the
 # template.

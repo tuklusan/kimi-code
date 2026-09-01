@@ -83,6 +83,9 @@ cd kimi-code/sanyalnet-lab
 - **`KIMI_OUTBOUND_MIN_INTERVAL_MS`** —— 模型驱动的对外网络调用（`fetch_url`、`web_search`）之间最小 1 秒的间隔。两个工具共用同一节流器，跨工具的失控循环也会被限速。默认 `1000`；设为 `0` 关闭。
 - **自动更新默认关闭** —— 本分支通过 `kimi-code-sanyalnet-cli-v*` 标签发布自己的原生二进制；上游更新通道是独立发行渠道，若不关闭会静默把分支二进制替换为上游版本。用 `KIMI_CODE_AUTO_UPDATE=1` 显式打开。手动 `kimi upgrade` 仍然可用。
 - **下游发行工作流** —— [`.github/workflows/sanyalnet-release.yml`](.github/workflows/sanyalnet-release.yml) 发布带标签的 `kimi-code-sanyalnet-cli-vX.Y.Z` 版本，包含六平台 SEA 二进制，不需要 macOS 签名。
+- **公司代码评审工作流** —— [`sanyalnet-lab/review-workflows/`](sanyalnet-lab/review-workflows/) 提供语言中立、带裁决机制的评审流程，由完整的软件公司对当前代码库运行。已随分支发布两个：[`deepseek-v4-pro-software-company-review-workflow-v31-draft.md`](sanyalnet-lab/review-workflows/deepseek-v4-pro-software-company-review-workflow-v31-draft.md)（面向 DeepSeek V4 Pro，需要 `DEEPSEEK_API_KEY`）和 [`nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md`](sanyalnet-lab/review-workflows/nvidia-nim-nemotron3-ultra-software-company-review-workflow-final.md)（面向 Nemotron 3 Ultra 550B A55B，需要 `NVIDIA_API_KEY_CODING`）。`install.sh` 会把两者软链到 `$KIMI_CODE_HOME`，任何 kimi 会话只需一次 `cat` + 粘贴即可调用。
+- **模型 404 视为可重试** —— 一些模型网关在端点预热或自动扩缩时会短暂返回 HTTP 404（尤其是 NVIDIA NIM 目录端点在 Nemotron 自动扩缩期间）。上游把 404 当作确定性错误快速失败；本分支把 404 归为与 429 同类的可重试，一次自动扩缩抖动不再让整个公司流水线中止。
+- **`WaitFor` 工具等待上限提升到 7 天** —— 上游把 `WaitFor` 后台任务等待器的上限设为 bash 后台默认值（10 分钟），使得长时间运行的验证 / QA / 评审任务在等待中被提前踢出，迫使调用方进入轮询循环。本分支把上限设为几乎无限的 7 天，让多小时的 SDLC 运行可以直接等待。
 
 ## 多平台测试结果
 
