@@ -1,0 +1,88 @@
+name: Regen Snapshots
+
+# Manual-dispatch helper for the SANYALnet fork. Runs `pnpm test -u`
+# against the current tree, captures every file the update mutated,
+# and uploads them as a single artifact so a maintainer can download
+# and commit the regenerated snapshot bytes back to the branch.
+#
+# When to use: after a change that shifts the bytes of an upstream
+# inline snapshot (typical case: a bumped constant that flows into
+# a tool schema JSON, whose hash then no longer matches the pinned
+# snapshot). Do NOT wire this into every push — regenerating snapshots
+# is a deliberate maintainer action, not a CI automation.
+#
+# The workflow does NOT push. It uploads a `snapshot-updates` artifact
+# whose contents you unzip on top of your local checkout, then commit
+# and push through the usual pre-commit hooks.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regen:
+    name: Regenerate vitest snapshots
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Run vitest with snapshot update
+        shell: bash
+        run: |
+          set -euo pipefail
+          # vitest -u regenerates every inline / file snapshot as it
+          # runs. We deliberately do NOT run in parallel shards here so
+          # every test file sees the same regen pass in one process.
+          pnpm run test -- -u || {
+            echo "::warning::vitest -u exited non-zero; still packaging any files it changed"
+          }
+
+      - name: Package updated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="${{ runner.temp }}/snapshot-updates"
+          mkdir -p "$out"
+          # Everything git considers modified after -u is a snapshot
+          # update. Include untracked snapshot files too (new ones).
+          git status --porcelain
+          git diff --name-only > "$out/changed-files.txt" || true
+          git ls-files --others --exclude-standard >> "$out/changed-files.txt" || true
+          sort -u -o "$out/changed-files.txt" "$out/changed-files.txt"
+          if [ -s "$out/changed-files.txt" ]; then
+            tar czf "$out/snapshot-updates.tgz" -T "$out/changed-files.txt"
+            git diff > "$out/snapshot-updates.patch" || true
+            echo "Packaged $(wc -l < "$out/changed-files.txt") files."
+          else
+            echo "No snapshot updates produced by vitest -u."
+            touch "$out/snapshot-updates.tgz"
+            touch "$out/snapshot-updates.patch"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: snapshot-updates
+          path: |
+            ${{ runner.temp }}/snapshot-updates/snapshot-updates.tgz
+            ${{ runner.temp }}/snapshot-updates/snapshot-updates.patch
+            ${{ runner.temp }}/snapshot-updates/changed-files.txt
+          retention-days: 7
+          if-no-files-found: warn
