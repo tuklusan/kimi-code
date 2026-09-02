@@ -47,11 +47,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # vitest -u regenerates every inline / file snapshot as it
-          # runs. We deliberately do NOT run in parallel shards here so
-          # every test file sees the same regen pass in one process.
-          pnpm run test -- -u || {
-            echo "::warning::vitest -u exited non-zero; still packaging any files it changed"
+          # vitest --update regenerates every inline / file snapshot as
+          # it runs. Invoke vitest directly (NOT `pnpm run test -- -u`,
+          # which forwards `-u` past a `--` separator so vitest reads it
+          # as a test-name filter instead of the update flag). We do NOT
+          # shard here so every test file sees the same regen pass in one
+          # process.
+          pnpm exec vitest run --update || {
+            echo "::warning::vitest --update exited non-zero; still packaging any files it changed"
           }
 
       - name: Package updated files
