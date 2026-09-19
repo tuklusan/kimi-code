@@ -32,6 +32,18 @@ export KIMI_CODE_HOME="/path/to/custom/kimi-code"
 export KIMI_DISABLE_TELEMETRY=1
 ```
 
+> **下游分支说明：** 本分支**默认关闭遥测** —— 除非显式开启，否则不会向上游遥测端点（`telemetry-logs.kimi.com` / `telemetry-logs.kimi.ai`）发送任何事件。因此在默认构建中 `KIMI_DISABLE_TELEMETRY` 是冗余的（遥测本就已关闭），但仍被识别且始终优先。
+
+### `KIMI_ENABLE_TELEMETRY`
+
+下游分支的显式开关。由于本分支默认关闭遥测，将其设为 `1`（也接受 `true`/`yes`/`y`，不区分大小写）可在所有初始化路径（CLI TUI、`kimi web` 主机，以及无头 print / `kap-server` 主机）恢复上游遥测上报：
+
+```sh
+export KIMI_ENABLE_TELEMETRY=1
+```
+
+`KIMI_DISABLE_TELEMETRY=1` 与配置 `telemetry = false` 会覆盖它并强制关闭。
+
 ### `KIMI_MODEL_*` 系列
 
 不修改 `config.toml` 临时切换模型——设置 `KIMI_MODEL_NAME` 后，CLI 在内存里合成一个临时供应商，重启后失效。详见[用环境变量定义模型](#用环境变量定义模型-kimi-model)。
@@ -136,7 +148,8 @@ kimi
 
 | 环境变量 | 用途 | 合法值 |
 | --- | --- | --- |
-| `KIMI_DISABLE_TELEMETRY` | 关闭匿名遥测上报 | `1`、`true`、`yes`、`y`（不区分大小写） |
+| `KIMI_DISABLE_TELEMETRY` | 关闭匿名遥测上报（分支：冗余 —— 默认本就已关闭，但始终优先） | `1`、`true`、`yes`、`y`（不区分大小写） |
+| `KIMI_ENABLE_TELEMETRY` | 下游分支开关：重新启用遥测（本分支默认关闭） | `1`、`true`、`yes`、`y`（不区分大小写） |
 | `KIMI_CODE_PASSWORD` | 为 `kimi web` 本地服务设置并列鉴权密码，与 bearer token 同时有效；把服务绑定到非本机地址时建议设置，见[本地服务与 API](../guides/server.md#鉴权) | 任意非空字符串；未设置时仅 token 有效 |
 | `KIMI_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` | 会话关闭时是否保留后台任务，优先级高于 `config.toml`。默认会在退出时停止后台任务 | 真值：`1`/`true`/`yes`/`on`；假值：`0`/`false`/`no`/`off` |
 | `KIMI_CODE_BACKGROUND_MAX_RUNNING_TASKS` | 同时运行的后台任务数上限，优先级高于 `config.toml` 的 `[background] max_running_tasks`（不设置表示无上限） | 正整数；非法值被忽略 |

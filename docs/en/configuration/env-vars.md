@@ -32,6 +32,18 @@ Set to `1` to turn off anonymous telemetry reporting (also accepts `true`, `yes`
 export KIMI_DISABLE_TELEMETRY=1
 ```
 
+> **Downstream fork note:** this fork **suppresses telemetry by default** — no events are sent to the upstream telemetry endpoints (`telemetry-logs.kimi.com` / `telemetry-logs.kimi.ai`) unless you explicitly opt in. `KIMI_DISABLE_TELEMETRY` is therefore redundant in the default build (telemetry is already off) but still honored and always wins.
+
+### `KIMI_ENABLE_TELEMETRY`
+
+Downstream-fork opt-in. Because this fork keeps telemetry off by default, set this to `1` (also accepts `true`, `yes`, `y`, case-insensitive) to restore upstream telemetry reporting across all init paths (CLI TUI, `kimi web` host, and the headless print / `kap-server` host):
+
+```sh
+export KIMI_ENABLE_TELEMETRY=1
+```
+
+`KIMI_DISABLE_TELEMETRY=1` and config `telemetry = false` override this and force telemetry off.
+
 ### `KIMI_MODEL_*` family
 
 Switch models temporarily without modifying `config.toml` — when `KIMI_MODEL_NAME` is set, the CLI synthesizes a temporary provider in memory; the change does not persist after restart. See [Define a model from environment variables](#define-a-model-from-environment-variables-kimi-model).
@@ -136,7 +148,8 @@ Switches that control the behavior of subsystems such as telemetry, background t
 
 | Variable | Purpose | Valid values |
 | --- | --- | --- |
-| `KIMI_DISABLE_TELEMETRY` | Disable anonymous telemetry reporting | `1`, `true`, `yes`, `y` (case-insensitive) |
+| `KIMI_DISABLE_TELEMETRY` | Disable anonymous telemetry reporting (fork: redundant — already off by default, but always wins) | `1`, `true`, `yes`, `y` (case-insensitive) |
+| `KIMI_ENABLE_TELEMETRY` | Downstream-fork opt-in: re-enable telemetry (off by default in this fork) | `1`, `true`, `yes`, `y` (case-insensitive) |
 | `KIMI_CODE_PASSWORD` | Set a parallel auth credential for the `kimi web` local server, valid alongside the bearer token; recommended when binding the server beyond loopback — see [Local server and API](../guides/server.md#authentication) | Any non-empty string; when unset, only the token is valid |
 | `KIMI_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` | Whether to keep background tasks when the session closes; takes higher priority than `config.toml`. The default is to stop them on exit | Truthy: `1`/`true`/`yes`/`on`; falsy: `0`/`false`/`no`/`off` |
 | `KIMI_CODE_BACKGROUND_MAX_RUNNING_TASKS` | Cap on concurrently running background tasks; takes higher priority than `[background] max_running_tasks` in `config.toml` (unset means no cap) | Positive integer; invalid values are ignored |
