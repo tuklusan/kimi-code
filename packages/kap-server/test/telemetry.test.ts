@@ -45,6 +45,7 @@ describe('server telemetry', () => {
     const resolvedEnv = env ?? {
       ...process.env,
       KIMI_DISABLE_TELEMETRY: undefined,
+      KIMI_ENABLE_TELEMETRY: '1',
     };
     if (toml !== undefined) {
       await writeFile(join(home as string, 'config.toml'), toml, 'utf-8');
@@ -69,11 +70,22 @@ describe('server telemetry', () => {
     return app;
   }
 
-  it('attaches the cloud appender by default and persists the device id', async () => {
+  it('attaches the cloud appender when telemetry is opted in and persists the device id', async () => {
     const app = await bootCore();
     const telemetry = await initializeServerTelemetry(app, home as string);
     expect(telemetry.appender).toBeDefined();
     expect(readKimiDeviceId(home as string)).not.toBeNull();
+    await shutdownServerTelemetry(telemetry);
+  });
+
+  it('keeps the null appender by default when telemetry is not opted in', async () => {
+    const app = await bootCore(undefined, {
+      ...process.env,
+      KIMI_DISABLE_TELEMETRY: undefined,
+      KIMI_ENABLE_TELEMETRY: undefined,
+    });
+    const telemetry = await initializeServerTelemetry(app, home as string);
+    expect(telemetry.appender).toBeUndefined();
     await shutdownServerTelemetry(telemetry);
   });
 
@@ -126,6 +138,7 @@ describe('server telemetry', () => {
     async (value) => {
       const app = await bootCore(undefined, {
         ...process.env,
+        KIMI_ENABLE_TELEMETRY: '1',
         KIMI_DISABLE_TELEMETRY: value,
       });
       const telemetry = await initializeServerTelemetry(app, home as string);

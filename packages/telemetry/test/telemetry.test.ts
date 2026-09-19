@@ -5,10 +5,10 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { flushTelemetrySync, initializeTelemetry, shutdownTelemetry, track } from '../src';
-import { isTelemetryDisabledByEnv } from '../src/bootstrap';
+import { isTelemetryDisabledByEnv, shouldEnableTelemetry } from '../src/bootstrap';
 import { TelemetryClient, resetDefaultTelemetryClientForTests } from '../src/client';
 import { installCrashHandlersForClient, setCrashPhase, uninstallCrashHandlers } from '../src/crash';
 import { EventSink } from '../src/sink';
@@ -817,11 +817,50 @@ describe('AsyncTransport', () => {
 });
 
 describe('telemetry bootstrap', () => {
+  let savedEnable: string | undefined;
+  beforeEach(() => {
+    savedEnable = process.env['KIMI_ENABLE_TELEMETRY'];
+    process.env['KIMI_ENABLE_TELEMETRY'] = '1';
+  });
+  afterEach(() => {
+    if (savedEnable === undefined) delete process.env['KIMI_ENABLE_TELEMETRY'];
+    else process.env['KIMI_ENABLE_TELEMETRY'] = savedEnable;
+  });
+
   it('matches the KIMI_DISABLE_TELEMETRY true-value semantics', () => {
     expect(isTelemetryDisabledByEnv({ KIMI_DISABLE_TELEMETRY: '1' })).toBe(true);
     expect(isTelemetryDisabledByEnv({ KIMI_DISABLE_TELEMETRY: 'yes' })).toBe(true);
     expect(isTelemetryDisabledByEnv({ KIMI_DISABLE_TELEMETRY: '0' })).toBe(false);
     expect(isTelemetryDisabledByEnv({ KIMI_DISABLE_TELEMETRY: 'false' })).toBe(false);
+  });
+
+  it('is suppressed by default (fork opt-in) and re-enabled by KIMI_ENABLE_TELEMETRY', () => {
+    expect(shouldEnableTelemetry({ env: {} })).toBe(false);
+    expect(shouldEnableTelemetry({ env: { KIMI_ENABLE_TELEMETRY: '1' } })).toBe(true);
+    expect(shouldEnableTelemetry({ enabled: false, env: { KIMI_ENABLE_TELEMETRY: '1' } })).toBe(
+      false,
+    );
+    expect(
+      shouldEnableTelemetry({
+        env: { KIMI_ENABLE_TELEMETRY: '1', KIMI_DISABLE_TELEMETRY: 'true' },
+      }),
+    ).toBe(false);
+  });
+
+  it('does not attach a sink or send when telemetry is not opted in', async () => {
+    const fetchImpl = vi.fn(async () => new Response('', { status: 200 }));
+    vi.stubGlobal('fetch', fetchImpl);
+    delete process.env['KIMI_ENABLE_TELEMETRY'];
+    initializeTelemetry({
+      homeDir: await tempHome(),
+      deviceId: 'dev',
+      appName: 'kimi-code-cli',
+      version: '1.2.3',
+    });
+    track('dropped_default');
+    await shutdownTelemetry();
+
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it('disables the singleton without attaching a sink when opted out', async () => {

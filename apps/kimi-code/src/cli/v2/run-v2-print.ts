@@ -58,6 +58,7 @@ import {
   type Scope,
 } from '@moonshot-ai/agent-core-v2';
 import { createKimiDefaultHeaders, createKimiDeviceId } from '@moonshot-ai/kimi-code-oauth';
+import { shouldEnableTelemetry } from '@moonshot-ai/kimi-telemetry';
 import type { GoalUpdated } from '@moonshot-ai/agent-core-v2/features/goal/goalOps';
 import type { TurnEnded } from '@moonshot-ai/agent-core-v2/agent/loop/turnOps';
 import type {
@@ -169,11 +170,11 @@ export async function runV2Print(
   // user left unset are filled, in the memory layer.
   await applyPrintModeConfigDefaults(configService);
   const defaultModel = configService.get<string>('defaultModel') ?? undefined;
-  let telemetryEnabled = true;
+  let telemetryEnabled = false;
   try {
-    telemetryEnabled = configService.get('telemetry') !== false;
+    telemetryEnabled = shouldEnableTelemetry({ enabled: configService.get('telemetry') !== false });
   } catch {
-    telemetryEnabled = true;
+    telemetryEnabled = shouldEnableTelemetry();
   }
   for (const diagnostic of configService.diagnostics()) {
     if (diagnostic.severity === 'warning') {

@@ -67,6 +67,7 @@ vi.mock('@moonshot-ai/kimi-code-sdk', async (importOriginal) => {
 
 vi.mock('@moonshot-ai/kimi-telemetry', () => ({
   initializeTelemetry: vi.fn(),
+  shouldEnableTelemetry: vi.fn(() => false),
   setCrashPhase: vi.fn(),
   shutdownTelemetry: vi.fn(),
   track: vi.fn(),

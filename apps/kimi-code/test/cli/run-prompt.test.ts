@@ -169,6 +169,7 @@ vi.mock('@moonshot-ai/kimi-code-oauth', async () => {
 
 vi.mock('@moonshot-ai/kimi-telemetry', () => ({
   initializeTelemetry: mocks.initializeTelemetry,
+  shouldEnableTelemetry: () => false,
   setCrashPhase: mocks.setCrashPhase,
   shutdownTelemetry: mocks.shutdownTelemetry,
   track: mocks.telemetryTrack,

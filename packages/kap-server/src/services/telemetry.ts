@@ -13,6 +13,7 @@ import { createKimiDeviceId } from '@moonshot-ai/kimi-code-oauth';
 const SERVER_TELEMETRY_APP_NAME = 'kimi-code-cli';
 const SERVER_TELEMETRY_UI_MODE = 'web';
 const TELEMETRY_DISABLE_ENV = 'KIMI_DISABLE_TELEMETRY';
+const TELEMETRY_ENABLE_ENV = 'KIMI_ENABLE_TELEMETRY';
 const TELEMETRY_DISABLE_ENV_VALUES = new Set(['1', 'true', 't', 'yes', 'y']);
 
 const TELEMETRY_SHUTDOWN_TIMEOUT_MS = 3_000;
@@ -27,6 +28,11 @@ function isTelemetryDisabledByEnv(core: Scope): boolean {
   return value !== undefined && TELEMETRY_DISABLE_ENV_VALUES.has(value.trim().toLowerCase());
 }
 
+function isTelemetryEnabledByEnv(core: Scope): boolean {
+  const value = core.accessor.get(IBootstrapService).getEnv(TELEMETRY_ENABLE_ENV);
+  return value !== undefined && TELEMETRY_DISABLE_ENV_VALUES.has(value.trim().toLowerCase());
+}
+
 export async function initializeServerTelemetry(
   core: Scope,
   homeDir: string,
@@ -35,7 +41,7 @@ export async function initializeServerTelemetry(
   const config = core.accessor.get(IConfigService);
   await config.ready;
   const enabled = config.get('telemetry') !== false;
-  if (!enabled || isTelemetryDisabledByEnv(core)) return {};
+  if (!enabled || isTelemetryDisabledByEnv(core) || !isTelemetryEnabledByEnv(core)) return {};
 
   const auth = core.accessor.get(IOAuthToolkit);
   const appender = createCloudAppender(core.accessor, {

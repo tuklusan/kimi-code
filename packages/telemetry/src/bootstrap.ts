@@ -4,6 +4,10 @@ import { SystemMetricsCollector } from './systemMetrics';
 import { AsyncTransport } from './transport';
 
 export const TELEMETRY_DISABLE_ENV = 'KIMI_DISABLE_TELEMETRY';
+// Fork opt-in: telemetry is suppressed by default in this downstream fork (no
+// calls to telemetry-logs.kimi.com / telemetry-logs.kimi.ai). Set
+// KIMI_ENABLE_TELEMETRY to a truthy value to restore upstream behavior.
+export const TELEMETRY_ENABLE_ENV = 'KIMI_ENABLE_TELEMETRY';
 
 const TRUE_ENV_VALUES = new Set(['1', 'true', 't', 'yes', 'y']);
 
@@ -34,10 +38,22 @@ export function isTelemetryDisabledByEnv(env: NodeJS.ProcessEnv = process.env): 
   return value !== undefined && TRUE_ENV_VALUES.has(value.trim().toLowerCase());
 }
 
+export function isTelemetryEnabledByEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  const value = env[TELEMETRY_ENABLE_ENV];
+  return value !== undefined && TRUE_ENV_VALUES.has(value.trim().toLowerCase());
+}
+
 export function shouldEnableTelemetry(
   input: { readonly enabled?: boolean; readonly env?: NodeJS.ProcessEnv } = {},
 ): boolean {
-  return input.enabled !== false && !isTelemetryDisabledByEnv(input.env ?? process.env);
+  const env = input.env ?? process.env;
+  // A caller opting out (config `telemetry: false`) or the explicit disable env
+  // always wins. Otherwise the fork stays silent unless telemetry is explicitly
+  // re-enabled via KIMI_ENABLE_TELEMETRY, so no telemetry endpoint is contacted
+  // by default.
+  if (input.enabled === false) return false;
+  if (isTelemetryDisabledByEnv(env)) return false;
+  return isTelemetryEnabledByEnv(env);
 }
 
 export function initializeTelemetry(options: TelemetryBootstrapOptions): void {
