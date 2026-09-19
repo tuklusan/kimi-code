@@ -227,16 +227,32 @@ export function isRetryableGenerateError(error: unknown): boolean {
     if (error instanceof APIProviderQuotaExhaustedError) {
       return false;
     }
-    // Transient statuses worth retrying: 404 (fork-only — some model
-    // gateways return 404 transiently for endpoints that dynamically
-    // come online / go offline, notably NVIDIA NIM catalog endpoints
-    // during model warm-up and Nemotron 3 Ultra 550B A55B autoscaling
-    // events; upstream treated 404 as deterministic, this fork treats
-    // it in the same retryable class as 429), 408 (request timeout),
-    // 409 (lock/conflict timeout), 429 (rate limit), 5xx (server
-    // errors) and 529 (provider overloaded — the "engine is currently
-    // overloaded" case).
-    return [404, 408, 409, 429, 500, 502, 503, 504, 529].includes(error.statusCode);
+    // Deterministic 400 subclasses must keep failing fast even though 400 is
+    // now in the retryable set below: context-overflow and request-too-large
+    // are recovered by the trimming/resend path, not by replaying the identical
+    // oversized request, so retrying them first would only burn the budget.
+    if (error instanceof APIContextOverflowError || error instanceof APIRequestTooLargeError) {
+      return false;
+    }
+    // Image-format rejections arrive as a bare 400 APIStatusError and are
+    // deterministic per history (recovered by the media-stripped resend, see
+    // isImageFormatError) — replaying the same request just re-fails.
+    if (error.statusCode === 400 && isImageFormatError(error)) {
+      return false;
+    }
+    // Transient statuses worth retrying: 400 (fork-only — some strict
+    // OpenAI-compatible gateways, notably NVIDIA NIM, return a transient 400
+    // during model warm-up / autoscaling and on gateway hiccups; upstream
+    // treated all 400s as deterministic, this fork retries the generic ones in
+    // the same class as 429 while the deterministic 400 subclasses above still
+    // fail fast), 404 (fork-only — some model gateways return 404 transiently
+    // for endpoints that dynamically come online / go offline, notably NVIDIA
+    // NIM catalog endpoints during model warm-up and Nemotron 3 Ultra 550B A55B
+    // autoscaling events; upstream treated 404 as deterministic, this fork
+    // treats it in the same retryable class as 429), 408 (request timeout),
+    // 409 (lock/conflict timeout), 429 (rate limit), 5xx (server errors) and
+    // 529 (provider overloaded — the "engine is currently overloaded" case).
+    return [400, 404, 408, 409, 429, 500, 502, 503, 504, 529].includes(error.statusCode);
   }
   // Fallback safety net: an unclassified provider failure — typically an
   // upstream gateway that forwards the original error only as text, with no
@@ -244,7 +260,7 @@ export function isRetryableGenerateError(error: unknown): boolean {
   // message) — lands here as a base `ChatProviderError`. Retrying beats
   // failing the run on the first transient blip. Typed `APIStatusError`
   // instances are deliberately excluded above: deterministic 4xx
-  // (400/401/403/422 — 404 is treated as retryable, see above) and the
+  // (401/403/422 — 400 and 404 are treated as retryable, see above) and the
   // recovery-owned context-overflow / request-too-large subclasses keep
   // their dedicated handling instead of burning retries first. Image-format rejections are likewise excluded:
   // they are deterministic per history and recovered by the media-stripped

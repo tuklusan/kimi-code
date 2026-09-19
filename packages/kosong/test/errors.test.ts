@@ -151,12 +151,19 @@ describe('isRetryableGenerateError', () => {
     ).toBe(true);
   });
 
-  it.each([404, 408, 409, 429, 500, 502, 503, 504, 529])('treats HTTP %i as retryable', (statusCode) => {
+  it.each([400, 404, 408, 409, 429, 500, 502, 503, 504, 529])('treats HTTP %i as retryable', (statusCode) => {
     expect(isRetryableGenerateError(new APIStatusError(statusCode, 'retryable'))).toBe(true);
   });
 
-  it.each([400, 401, 403, 422])('treats HTTP %i as non-retryable', (statusCode) => {
+  it.each([401, 403, 422])('treats HTTP %i as non-retryable', (statusCode) => {
     expect(isRetryableGenerateError(new APIStatusError(statusCode, 'non-retryable'))).toBe(false);
+  });
+
+  it('keeps deterministic 400 subclasses non-retryable', () => {
+    expect(isRetryableGenerateError(new APIRequestTooLargeError(400, 'request too large'))).toBe(false);
+    expect(
+      isRetryableGenerateError(new APIStatusError(400, 'unsupported image format')),
+    ).toBe(false);
   });
 
   it('propagates retryAfterMs through normalizeAPIStatusError onto the typed error', () => {

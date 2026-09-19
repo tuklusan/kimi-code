@@ -161,7 +161,7 @@ describe('isRetryableGenerateError', () => {
     expect(isRetryableGenerateError(new APIEmptyResponseError('empty'))).toBe(true);
   });
 
-  it.each([404, 408, 409, 429, 500, 502, 503, 504, 529])(
+  it.each([400, 404, 408, 409, 429, 500, 502, 503, 504, 529])(
     'treats HTTP %i as retryable',
     (statusCode) => {
       expect(isRetryableGenerateError(new APIStatusError(statusCode, 'retryable'))).toBe(true);
@@ -175,8 +175,12 @@ describe('isRetryableGenerateError', () => {
     ).toBe(true);
   });
 
-  it.each([400, 401, 403, 422])('treats HTTP %i as non-retryable', (statusCode) => {
+  it.each([401, 403, 422])('treats HTTP %i as non-retryable', (statusCode) => {
     expect(isRetryableGenerateError(new APIStatusError(statusCode, 'non-retryable'))).toBe(false);
+  });
+
+  it('keeps deterministic image-format 400 non-retryable', () => {
+    expect(isRetryableGenerateError(new APIStatusError(400, 'unsupported image format'))).toBe(false);
   });
 
   it('does not retry context overflow or unknown errors', () => {
